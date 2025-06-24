@@ -16,5 +16,5 @@ selenium==4.25.0
 webdriver_manager==4.0.2
 PyYAML==6.0.2
 qiniu==7.14.0
-mysqlclient
+mysqlclient==2.2.7
 django-cors-headers==4.4.0

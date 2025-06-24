@@ -363,13 +363,13 @@ def admin_overview(request):
         pro_cnt = Project.objects.all().count() # 文集总数
         # 文档数
         doc_cnt = Doc.objects.all().count() # 文档总数
-        total_tag_cnt = Tag.objects.filter(create_user=request.user).count()
-        img_cnt = Image.objects.filter(user=request.user).count()
-        attachment_cnt = Attachment.objects.filter(user=request.user).count()
+        total_tag_cnt = Tag.objects.all().count()
+        img_cnt = Image.objects.all().count()
+        attachment_cnt = Attachment.objects.all().count()
         # 文档动态
         doc_active_list = Doc.objects.all().order_by('-modify_time')[:5]
-        # 个人文集列表
-        pro_list = Project.objects.filter(create_user=request.user).order_by('-create_time')
+        # 文集列表
+        pro_list = Project.objects.all().order_by('-create_time')
         return render(request,'app_admin/admin_overview.html',locals())
     else:
         pass
@@ -779,7 +779,8 @@ def admin_project_istop(request):
 def admin_doc(request):
     if request.method == 'GET':
         # 文集列表
-        project_list = Project.objects.all()  # 自己创建的文集列表
+        project_list = Project.objects.all()  # 所有文集列表
+
         # 文档数量
         # 已发布文档数量
         published_doc_cnt = Doc.objects.filter(status=1).count()
@@ -800,7 +801,7 @@ def admin_doc(request):
             q_status = [0, 1]
 
         if project == '':
-            project_list = Project.objects.all().values_list('id', flat=True)  # 自己创建的文集列表
+            project_list = Project.objects.all().values_list('id', flat=True)  # 所有文集列表
             q_project = list(project_list)
         else:
             q_project = [project]
@@ -821,14 +822,14 @@ def admin_doc(request):
             ).order_by('-modify_time')
 
         # 文集列表
-        project_list = Project.objects.filter(create_user=request.user)  # 自己创建的文集列表
+        project_list = Project.objects.all()  # 所有文集列表
         colla_project_list = ProjectCollaborator.objects.filter(user=request.user)  # 协作的文集列表
 
         # 文档数量
         # 已发布文档数量
-        published_doc_cnt = Doc.objects.filter(create_user=request.user, status=1).count()
+        published_doc_cnt = Doc.objects.filter(status=1).count()
         # 草稿文档数量
-        draft_doc_cnt = Doc.objects.filter(create_user=request.user, status=0).count()
+        draft_doc_cnt = Doc.objects.filter(status=0).count()
         # 所有文档数量
         all_cnt = published_doc_cnt + draft_doc_cnt
 
@@ -1450,22 +1451,11 @@ def admin_site_config(request):
         logger.exception("更新站点设置出错")
         return JsonResponse({'code':2,'data':'更新出错'})
 
-# 检测版本更新
+# # 检测版本更新
 def check_update(request):
-    gitee_url = 'https://gitee.com/api/v5/repos/zmister/MrDoc/tags'
-    github_url = 'https://api.github.com/repos/zmister2016/MrDoc/tags'
-    gitee_resp = requests.get(gitee_url,timeout=5)
-    if gitee_resp.status_code == 200:
-        # gitee上查找版本取结果数组中最后一个对象为最新版本
-        return JsonResponse({'status':True,'data':gitee_resp.json()[-1]})
-    else:
-        github_resp = requests.get(github_url,timeout=5)
-        if github_resp.status_code == 200:
-            return JsonResponse({'status':True,'data':github_resp.json()[0]})
-        else:
-            return JsonResponse({'status':True,'data':{'name': 'v0.0.1'}})
+     return JsonResponse({'status':True,'data':{'name': 'v0.0.1'}})
 
-# 站点数据备份
+# # 站点数据备份
 @superuser_only
 @require_POST
 def admin_backup(request):
@@ -1488,9 +1478,6 @@ def admin_backup(request):
             for db_file, app_label in db_files.items():
                 dst = os.path.join(backup_dir, db_file)
                 with open(dst, 'w', encoding='utf-8') as f:
-                    # result = subprocess.run([sys.executable, 'manage.py', 'dumpdata', app_label],stdout=f,stderr=subprocess.PIPE)
-                    # if result.returncode != 0:
-                    #     raise Exception(f"Error dumping {app_label}: {result.stderr}")
                     out = StringIO()
                     call_command('dumpdata', app_label, stdout=out)
                     f.write(out.getvalue())
@@ -1596,13 +1583,13 @@ def admin_center_menu(request):
                 },
             ]
         },
-        {
-            "id": 5,
-            "title": _("注册码管理"),
-            "type": 1,
-            "icon": "layui-icon layui-icon-component",
-            "href": reverse('register_code_manage'),
-        },
+        # {
+        #     "id": 5,
+        #     "title": _("注册码管理"),
+        #     "type": 1,
+        #     "icon": "layui-icon layui-icon-component",
+        #     "href": reverse('register_code_manage'),
+        # },
         {
             "id": 6,
             "title": _("用户管理"),
@@ -1610,91 +1597,91 @@ def admin_center_menu(request):
             "icon": "layui-icon layui-icon-user",
             "href": reverse('user_manage'),
         },
-        {
-            "id": 7,
-            "title": _("站点设置"),
-            "type": 1,
-            "icon": "layui-icon layui-icon-set",
-            "href": reverse('sys_setting'),
-        },
-        {
-            "id": 'update_pro',
-            "title": _("升级专业版"),
-            "type": 1,
-            "icon": "layui-icon layui-icon-senior",
-            "href": 'https://doc.mrdoc.pro/doc/3441/',
-            "openType": "_blank",
-        },
-        {
-            "id": "download",
-            "title": _("客户端下载"),
-            "icon": "layui-icon layui-icon-template-1",
-            "type": 0,
-            "href": "",
-            "children": [
-                {
-                    "id": 702,
-                    "title": _("浏览器扩展"),
-                    "icon": "layui-icon layui-icon-face-cry",
-                    "type": 1,
-                    "openType": "_blank",
-                    "href": "https://gitee.com/zmister/mrdoc-webclipper"
-                },
-                {
-                    "id": 703,
-                    "title": _("桌面客户端"),
-                    "icon": "layui-icon layui-icon-face-cry",
-                    "type": 1,
-                    "openType": "_blank",
-                    "href": "https://gitee.com/zmister/mrdoc-desktop-release"
-                },
-                {
-                    "id": 704,
-                    "title": _("移动端APP"),
-                    "icon": "layui-icon layui-icon-face-cry",
-                    "type": 1,
-                    "openType": "_blank",
-                    "href": "https://gitee.com/zmister/mrdoc-app-release"
-                },
-                {
-                    "id": 705,
-                    "title": _("Obsidian插件"),
-                    "icon": "layui-icon layui-icon-face-cry",
-                    "type": 1,
-                    "openType": "_blank",
-                    "href": "https://gitee.com/zmister/obsidian-mrdoc-plugin"
-                },
-            ]
-        },
-        {
-            "id": "common",
-            "title": _("使用帮助"),
-            "icon": "layui-icon layui-icon-template-1",
-            "type": 0,
-            "href": "",
-            "children": [{
-                "id": 701,
-                "title": _("部署手册"),
-                "icon": "layui-icon layui-icon-face-smile",
-                "type": 1,
-                "openType": "_blank",
-                "href": "https://doc.mrdoc.pro/project/7/"
-            }, {
-                "id": 702,
-                "title": _("使用手册"),
-                "icon": "layui-icon layui-icon-face-smile",
-                "type": 1,
-                "openType": "_blank",
-                "href": "https://doc.mrdoc.pro/project/54/"
-            },{
-                "id": 'doc-example',
-                "title": _("文档示例"),
-                "icon": "layui-icon layui-icon-face-smile",
-                "type": 1,
-                "openType": "_blank",
-                "href": "https://doc.mrdoc.pro/p/example/"
-            }
-            ]
-        }
+        # {
+        #     "id": 7,
+        #     "title": _("站点设置"),
+        #     "type": 1,
+        #     "icon": "layui-icon layui-icon-set",
+        #     "href": reverse('sys_setting'),
+        # },
+        # {
+        #     "id": 'update_pro',
+        #     "title": _("升级专业版"),
+        #     "type": 1,
+        #     "icon": "layui-icon layui-icon-senior",
+        #     "href": 'https://doc.mrdoc.pro/doc/3441/',
+        #     "openType": "_blank",
+        # },
+        # {
+        #     "id": "download",
+        #     "title": _("客户端下载"),
+        #     "icon": "layui-icon layui-icon-template-1",
+        #     "type": 0,
+        #     "href": "",
+        #     "children": [
+        #         {
+        #             "id": 702,
+        #             "title": _("浏览器扩展"),
+        #             "icon": "layui-icon layui-icon-face-cry",
+        #             "type": 1,
+        #             "openType": "_blank",
+        #             "href": "https://gitee.com/zmister/mrdoc-webclipper"
+        #         },
+        #         {
+        #             "id": 703,
+        #             "title": _("桌面客户端"),
+        #             "icon": "layui-icon layui-icon-face-cry",
+        #             "type": 1,
+        #             "openType": "_blank",
+        #             "href": "https://gitee.com/zmister/mrdoc-desktop-release"
+        #         },
+        #         {
+        #             "id": 704,
+        #             "title": _("移动端APP"),
+        #             "icon": "layui-icon layui-icon-face-cry",
+        #             "type": 1,
+        #             "openType": "_blank",
+        #             "href": "https://gitee.com/zmister/mrdoc-app-release"
+        #         },
+        #         {
+        #             "id": 705,
+        #             "title": _("Obsidian插件"),
+        #             "icon": "layui-icon layui-icon-face-cry",
+        #             "type": 1,
+        #             "openType": "_blank",
+        #             "href": "https://gitee.com/zmister/obsidian-mrdoc-plugin"
+        #         },
+        #     ]
+        # },
+        # {
+        #     "id": "common",
+        #     "title": _("使用帮助"),
+        #     "icon": "layui-icon layui-icon-template-1",
+        #     "type": 0,
+        #     "href": "",
+        #     "children": [{
+        #         "id": 701,
+        #         "title": _("部署手册"),
+        #         "icon": "layui-icon layui-icon-face-smile",
+        #         "type": 1,
+        #         "openType": "_blank",
+        #         "href": "https://doc.mrdoc.pro/project/7/"
+        #     }, {
+        #         "id": 702,
+        #         "title": _("使用手册"),
+        #         "icon": "layui-icon layui-icon-face-smile",
+        #         "type": 1,
+        #         "openType": "_blank",
+        #         "href": "https://doc.mrdoc.pro/project/54/"
+        #     },{
+        #         "id": 'doc-example',
+        #         "title": _("文档示例"),
+        #         "icon": "layui-icon layui-icon-face-smile",
+        #         "type": 1,
+        #         "openType": "_blank",
+        #         "href": "https://doc.mrdoc.pro/p/example/"
+        #     }
+        #     ]
+        # }
     ]
     return JsonResponse(menu_data,safe=False)

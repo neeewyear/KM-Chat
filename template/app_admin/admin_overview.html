@@ -10,8 +10,8 @@
 {% block content %}
 <div>
     <div class="layui-row layui-col-space10">
-        <div class="layui-col-xs6 layui-col-md8 layui-col-space5">
-            <div class="layui-col-xs6 layui-col-md3">
+        <div class="layui-col-xs6 layui-col-md12 layui-col-space5">
+            <div class="layui-col-xs6 layui-col-md2">
                 <div class="layui-card top-panel">
                     <div class="layui-card-header">用户总数</div>
                     <div class="layui-card-body">
@@ -25,7 +25,7 @@
                     </div>
                 </div>
             </div>
-            <div class="layui-col-xs6 layui-col-md3">
+            <div class="layui-col-xs6 layui-col-md2">
                 <div class="layui-card top-panel">
                     <div class="layui-card-header">文集总数</div>
                     <div class="layui-card-body">
@@ -40,7 +40,7 @@
                     </div>
                 </div>
             </div>
-            <div class="layui-col-xs6 layui-col-md3">
+            <div class="layui-col-xs6 layui-col-md2">
                 <div class="layui-card top-panel">
                     <div class="layui-card-header">文档总数</div>
                     <div class="layui-card-body">
@@ -55,7 +55,7 @@
                     </div>
                 </div>
             </div>
-            <div class="layui-col-xs6 layui-col-md3">
+            <div class="layui-col-xs6 layui-col-md2">
                 <div class="layui-card top-panel">
                     <div class="layui-card-header">图片总数</div>
                     <div class="layui-card-body">
@@ -70,7 +70,7 @@
                     </div>
                 </div>
             </div>
-            <div class="layui-col-xs6 layui-col-md3">
+            <div class="layui-col-xs6 layui-col-md2">
                 <div class="layui-card top-panel">
                     <div class="layui-card-header">附件总数</div>
                     <div class="layui-card-body">
@@ -86,30 +86,6 @@
                 </div>
             </div>
     
-        </div>
-        <!-- 觅思文档版本信息 -->
-        <div class="layui-col-xs6 layui-col-md4">
-            <div class="layui-card">
-                <div class="layui-card-header">MrDoc {{mrdoc_version}}</div>
-                <div class="layui-card-body">
-                    <div style="margin-bottom: 5px;">
-
-                    </div>
-                    <div class="layui-btn-group" style="margin-bottom: 5px;display:flex;justify-content: space-between;">
-                        <a href="https://doc.mrdoc.pro/project-7/doc-3441/" class="pear-btn" target="_blank">
-                            <i class="layui-icon layui-icon-rate-solid" style="color:rgb(242, 203, 81);"></i>
-                            <span style="font-weight:700;color:red;">升级专业版！</span>
-                        </a>
-                        <a href="https://gitee.com/zmister/MrDoc" class="pear-btn" target="_blank">访问 Gitee</a>
-                        <a href="https://github.com/zmister2016/MrDoc" class="pear-btn" target="_blank">访问 GitHub</a>
-                        <button class="pear-btn" onclick="checkUpdate()">检查更新</button>
-                    </div>
-                    <div style="margin-bottom: 5px;">
-                        <img src="{% static 'mrdoc/1354bec77bdb4339a74a79397ca79f2d4926.png' %}" width="50%" />
-                    </div>
-
-                </div>
-              </div>
         </div>
     </div>
     <div class="layui-row layui-col-space10">

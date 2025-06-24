@@ -18,56 +18,14 @@
         <div class="layui-tab">
           <ul class="layui-tab-title">
             <li class="layui-this">基础设置</li>
-            <li>邮箱设置</li>
+            <!-- <li>邮箱设置</li> -->
             <li>文档设置</li>
-            <li>站点数据管理</li>
+            <!-- <li>站点数据管理</li> -->
           </ul>
           <div class="layui-tab-content">
               <!-- 网站设置 -->
             <div class="layui-tab-item layui-show">
-               <form class="layui-form" lay-filter="meta_config">
-                   <div class="layui-card settings-card">
-                    <div class="layui-card-header">站点元信息</div>
-                    <div class="layui-card-body">
-                      <!-- 站点名称 -->
-                      <div class="layui-form-item layui-form-text">
-                        <label class="layui-form-label">站点名称</label>
-                        <div class="layui-input-inline">
-                          <input name="site_name" placeholder="请输入站点标题" class="layui-input" value="{% if site_name != None %}{{site_name}}{% endif %}"></input>
-                        </div>
-                      </div>
-                      <!-- 站点子标题 -->
-                      <div class="layui-form-item layui-form-text">
-                        <label class="layui-form-label">子标题</label>
-                        <div class="layui-input-block">
-                          <input name="site_sub_name" placeholder="请输入站点的子标题" class="layui-input" value="{% if site_sub_name != None %}{{site_sub_name}}{% endif %}"></input>
-                        </div>
-                      </div>
-                      <!-- 站点关键词 -->
-                      <div class="layui-form-item layui-form-text">
-                        <label class="layui-form-label">关键词</label>
-                        <div class="layui-input-block">
-                          <input name="site_keywords" placeholder="多个关键词请使用使用英文逗号,进行分隔" class="layui-input" value="{% if site_keywords != None %}{{site_keywords}}{% endif %}"></input>
-                        </div>
-                      </div>
-                      <!-- 站点描述 -->
-                      <div class="layui-form-item layui-form-text">
-                        <label class="layui-form-label">站点描述</label>
-                        <div class="layui-input-block">
-                          <input name="site_desc" placeholder="请用简短的文字描述你的觅思文档站点" class="layui-input" value="{% if site_desc != None %}{{site_desc}}{% endif %}"></input>
-                        </div>
-                      </div>
-                      <!-- 备案号 -->
-                      <div class="layui-form-item layui-form-text">
-                        <label class="layui-form-label">备案号</label>
-                        <div class="layui-input-inline">
-                          <input name="beian_code" placeholder="请输入网站的备案号" class="layui-input" value="{% if beian_code != None %}{{beian_code}}{% endif %}"></input>
-                        </div>
-                      </div>
-                        <div><button id="updateMetaBtn" type="button" class="pear-btn pear-btn-primary pear-btn-sm">更新</button></div>
-                    </div>
-                   </div>
-               </form>
+
                 <!-- 首页模式 -->
                 <form class="layui-form" lay-filter="index_mode_config">
                   <div class="layui-card settings-card">
@@ -133,63 +91,6 @@
                    </div>
                 </form>
 
-                <!-- 版本更新检测 -->
-                <form class="layui-form" lay-filter="version_check_config">
-                  <div class="layui-card settings-card">
-                    <div class="layui-card-header">版本更新检测</div>
-                    <div class="layui-card-body">
-                    <div class="layui-form-item">
-                      <label class="layui-form-label">禁止更新检测</label>
-                      <div class="layui-input-inline">
-                        <input type="checkbox" name="disable_update_check" lay-skin="switch" lay-text="开启|关闭"  {% if disable_update_check %}checked{% endif %}>
-                      </div>
-                      <div class="layui-form-mid layui-word-aux">开启后，后台将不会主动检测应用是否存在新的版本，默认关闭。</div>
-                    </div>
-                    <div><button id="updateVersionCheckBtn" type="button" class="pear-btn pear-btn-primary pear-btn-sm">更新</button></div>
-                    </div>
-                  </div>
-                </form>
-                <form class="layui-form" lay-filter="ad_config">
-                  <div class="layui-card settings-card">
-                    <div class="layui-card-header">页面信息块配置</div>
-                    <div class="layui-card-body">
-                      <div class="layui-form-item layui-form-text">
-                        <label class="layui-form-label">统计代码</label>
-                        <div class="layui-input-block">
-                          <textarea name="static_code" placeholder="如果需要调用第三方的统计功能，请将第三方统计工具代码输入至此，可以包含<script>标签" class="layui-textarea">{{static_code}}</textarea>
-                        </div>
-                      </div>
-
-                       <div class="layui-form-item layui-form-text">
-                        <label class="layui-form-label">广告位1</label>
-                        <div class="layui-input-block">
-                          <textarea name="ad_code" placeholder="如果需要在文档正文上方添加广告，请将广告相关代码输入至此，可以包含<script>标签" class="layui-textarea">{{ad_code}}</textarea>
-                        </div>
-                      </div>
-                      <div class="layui-form-item layui-form-text">
-                        <label class="layui-form-label">广告位2</label>
-                        <div class="layui-input-block">
-                          <textarea name="ad_code_2" placeholder="此广告位位于文档下方、分享按钮上方，可以包含<script>标签" class="layui-textarea">{{ad_code_2}}</textarea>
-                        </div>
-                      </div>
-
-                      <div class="layui-form-item layui-form-text">
-                        <label class="layui-form-label">广告位3</label>
-                        <div class="layui-input-block">
-                          <textarea name="ad_code_3" placeholder="此广告位位于文档左侧目录栏下方，可以包含<script>标签" class="layui-textarea">{{ad_code_3}}</textarea>
-                        </div>
-                      </div>
-                     <div class="layui-form-item layui-form-text">
-                        <label class="layui-form-label">广告位4</label>
-                        <div class="layui-input-block">
-                          <textarea name="ad_code_4" placeholder="此广告位位于文档左侧目录栏上方，可以包含<script>标签" class="layui-textarea">{{ad_code_4}}</textarea>
-                        </div>
-                      </div>
-                      <div><button id="updateAdBtn" type="button" class="pear-btn pear-btn-primary pear-btn-sm">更新</button></div>
-                    </div>
-                  </div>
-                </form>
-
                 <!-- 默认搜索方式 -->
                 <form class="layui-form" lay-filter="search_config">
                   <div class="layui-card settings-card">
@@ -214,68 +115,7 @@
             </div>
               <!-- 网站设置结束 -->
 
-              <!-- 邮箱设置 -->
-            <div class="layui-tab-item">
-                <form class="layui-form" lay-filter="emailConfig">
-                  <!-- 邮箱开关 -->
-                  <div class="layui-form-item">
-                    <label class="layui-form-label">启用邮箱</label>
-                    <div class="layui-input-inline">
-                      <input type="checkbox" name="enable_email" lay-skin="switch" lay-text="开启|关闭"  {% if enable_email %}checked{% endif %}>
-                    </div>
-                    <div class="layui-form-mid layui-word-aux">开启此选项后还需进行邮箱信息配置</div>
-                  </div>
-                  <div class="layui-form-item">
-                    <label class="layui-form-label">发件邮箱</label>
-                    <div class="layui-input-block">
-                      <input type="email" name="send_emailer" class="layui-input" required value="{{emailer.value}}">
-                    </div>
-                  </div>
-
-                   <div class="layui-form-item layui-form-text">
-                    <label class="layui-form-label">SMTP 主机</label>
-                    <div class="layui-input-block">
-                      <input type="text" name="smtp_host" class="layui-input" required value="{{email_host.value}}">
-                    </div>
-                  </div>
-
-                    <div class="layui-form-item layui-form-text">
-                    <label class="layui-form-label">SMTP 端口</label>
-                    <div class="layui-input-block">
-                      <input type="number" name="smtp_port" class="layui-input" required value="{{email_port.value}}">
-                    </div>
-                  </div>
-
-                   <div class="layui-form-item layui-form-text">
-                    <label class="layui-form-label">SMTP 用户名</label>
-                    <div class="layui-input-block">
-                      <input type="text" name="username" class="layui-input" required value="{{email_username.value}}">
-                    </div>
-                  </div>
-
-                    <div class="layui-form-item layui-form-text">
-                    <label class="layui-form-label">SMTP 密码</label>
-                    <div class="layui-input-block">
-                      <input type="password" name="pwd" class="layui-input" required value="{{email_dec_pwd}}">
-                    </div>
-                  </div>
-
-                    <div class="layui-form-item">
-                    <label class="layui-form-label">使用SSL</label>
-                    <div class="layui-input-block">
-                      <input type="checkbox" name="smtp_ssl" lay-skin="switch" lay-text="开启|关闭"  {% if email_ssl.value %}checked{% endif %}>
-                    </div>
-                  </div>
-
-                  <div class="layui-form-item">
-                    <div class="layui-input-block">
-                      <button class="pear-btn pear-btn-primary pear-btn-sm" type="button" id="updateEmailBtn">保存邮箱设置</button>
-                      <button class="pear-btn pear-btn-primary pear-btn-sm" type="button" id="checkEmail">验证邮箱设置</button>
-                    </div>
-                  </div>
-                </form>
-            </div>
-              <!-- 邮箱设置结束 -->
+             
 
               <!-- 全局文档设置 -->
             <div class="layui-tab-item">
