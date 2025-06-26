@@ -23,62 +23,12 @@
 			</div>
 		</div>
 		{% endif %}
-		<!-- 系统版本更新提示 -->
-		<!-- <div class="layui-card" style="display: none;" id="is_update_tips">
-			<div class="layui-card-body">
-				<div class="layui-card-header">
-					<span style="color:red;font-weight:700;"><i class="layui-icon layui-icon-tips"></i> {% trans "MrDoc 已发布新版本，点击查看" %}
-						<a href="https://gitee.com/zmister/MrDoc/blob/master/CHANGES.md" target="_blank" style="text-decoration:underline;">《更新内容》</a>，
-						点击查看 <a href="https://doc.mrdoc.pro/doc/1395/" target="_blank" style="text-decoration:underline;">《更新指南》</a>
-					</span>
-				</div>
-			</div>
-		</div> -->
+
 		{% block content %}
         {% endblock %}
 		<script src="{% static 'PearAdminLayui/component/layui/layui.js' %}?version={{mrdoc_version}}"></script>
 		<script src="{% static 'PearAdminLayui/component/pear/pear.js' %}?version={{mrdoc_version}}"></script>
-		<!-- <script src="{% static 'xm-select/dist/xm-select.js' %}"></script> -->
-		<!-- <script async>
-			layui.use(['jquery','layer'], function() {
-				let $ = layui.jquery;
-				let layer = layui.layer;
-				// 检测版本更新
-				checkUpdate = function(silence=false){
-					$.get("{% url 'check_update' %}",function(r){
-						// console.log(r)
-						if(r.status){
-							var new_version = r.data.name.slice(1,6)
-							var current_version = '{{mrdoc_version}}'
-							console.log(new_version,current_version)
-							if(new_version > current_version){
-								console.log("发现新版本")
-								if(silence){
-									$("#is_update_tips").css("display","block");
-									return false;
-								}
-								layer.open({
-									title:"{% trans '版本更新' %}",
-									content:"{% trans '觅思文档已发布新版本，请及时更新' %}",
-									btn:['知道了','了解如何更新'],
-									btn2:function(){
-										window.open("https://doc.mrdoc.pro/doc/1395/");
-									},
-								})
-							}else{
-								if(silence == false){
-									layer.msg("当前已是最新版本！")
-								}
-							}
-						}      
-					})
-				}
-				{% if disable_update_check %}
-				{% else %}
-				checkUpdate(silence=true);
-				{% endif %}
-			})
-		  </script> -->
+		
         {% block custom_script %}
         {% endblock %}
 	</body>

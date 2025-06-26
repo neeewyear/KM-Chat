@@ -187,9 +187,9 @@ LOGIN_URL = 'login'
 
 LANGUAGE_CODE = CONFIG.get('locale','language',fallback='zh-hans')
 
-TIME_ZONE = CONFIG.get('local','timezone', fallback='Asia/Shanghai')
+TIME_ZONE = CONFIG.get('local','timezone', fallback='UTC')
 
-USE_I18N = True
+USE_I18N = False
 
 USE_L10N = True
 
