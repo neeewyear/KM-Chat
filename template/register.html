@@ -3,111 +3,292 @@
 <!DOCTYPE html>
 <html lang='zh-CN'>
 <head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=Edge，chrome=1">
+	<meta http-equiv="Cache-Control" content="no-transform" />
+	<meta http-equiv="Cache-Control" content="no-siteapp" />
+	<meta http-equiv="Cache-Control" content="max-age=7200" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 	<title>{% trans "用户注册" %} - {% if site_name != None %}{{site_name}} {% else %}{% trans "觅思文档" %}{% endif %}</title>
 	<meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 	<link rel="stylesheet" href="{% static 'layui/css/layui.css' %}" crossorigin="anonymous">
     <link rel="icon" href="{% static 'search/mrdoc_logo_300.png' %}" sizes="192x192" />
+    <link rel="stylesheet" href="{% static 'mrdoc/mrdoc-unified.css' %}" />
     <style>
         body{
-            background-color: #fafafa;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             text-align: center;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            font-family: var(--font-family);
         }
+        
         .container{
             display: flex;
-            display: -webkit-flex;
             justify-content: center;
             align-items: center;
+            width: 100%;
+            padding: var(--spacing-md);
         }
-        .login-form{
-            margin-top: 5%;
-            padding: 20px 50px 20px 60px;
-            background-color: #fff;
-            -webkit-box-shadow: #666 0px 0px 10px;
-           -moz-box-shadow: #666 0px 0px 10px;
-           box-shadow: #666 0px 0px 10px;
+        
+        .register-form{
+            background-color: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            padding: var(--spacing-2xl);
+            max-width: 450px;
+            width: 100%;
+            animation: fadeIn 0.6s ease-out;
         }
-        .register-link{
-            font-size: 12px;
+        
+        .register-header {
+            text-align: center;
+            margin-bottom: var(--spacing-xl);
         }
-        .layui-btn-normal{
-        background-color: #2176ff !important;
-    }
-        /* 移动端输入框样式 */
-        @media screen and (max-width: 450px){
-            .layui-form-item .layui-input-inline {
-                display: block;
-                float: none;
-                left: -3px;
-                width: auto;
-                margin: 0;
+        
+        .register-logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: var(--spacing-lg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .register-title {
+            font-size: var(--font-size-2xl);
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .register-subtitle {
+            color: var(--text-secondary);
+            font-size: var(--font-size-base);
+        }
+        
+        .form-group {
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: var(--spacing-md);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: var(--font-size-base);
+            transition: all var(--transition-fast);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .form-control::placeholder {
+            color: var(--text-muted);
+        }
+        
+        .btn-register {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            font-size: var(--font-size-base);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .btn-register:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-register:active {
+            transform: translateY(0);
+        }
+        
+        .register-links {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+        
+        .register-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: var(--font-size-sm);
+            transition: color var(--transition-fast);
+        }
+        
+        .register-link:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+        
+        .register-footer {
+            margin-top: var(--spacing-xl);
+            padding-top: var(--spacing-lg);
+            border-top: 1px solid var(--border-light);
+            text-align: center;
+        }
+        
+        .register-footer-text {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+        }
+        
+        .error-message {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-lg);
+            font-size: var(--font-size-sm);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        
+        .success-message {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-lg);
+            font-size: var(--font-size-sm);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        
+        .captcha-container {
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: center;
+        }
+        
+        .captcha-input {
+            flex: 1;
+        }
+        
+        .captcha-image {
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: opacity var(--transition-fast);
+        }
+        
+        .captcha-image:hover {
+            opacity: 0.8;
+        }
+        
+        .password-requirements {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-sm);
+            margin-top: var(--spacing-xs);
+            font-size: var(--font-size-xs);
+            color: var(--text-secondary);
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
-        h3{
-            color: #666;
+        
+        /* 移动端适配 */
+        @media screen and (max-width: 450px){
+            .register-form {
+                padding: var(--spacing-lg);
+                margin: var(--spacing-sm);
+            }
+            
+            .register-links {
+                flex-direction: column;
+                gap: var(--spacing-sm);
+            }
         }
     </style>
 </head>
-<body background="{% static 'PearAdminLayui/admin/images/background.jpg' %}" style="background-repeat: no-repeat;background-size: cover;min-height: 100vh;">
+<body>
     <div class="container">
-        <div></div>
-        <div></div>
-        <div class="login-form">
-            <form class="layui-form" action="{% url 'register' %}"  method='POST'>
+        <div class="register-form">
+            <div class="register-header">
+                <img src="{% static 'search/mrdoc_logo_300.png' %}" alt="MrDoc" class="register-logo">
+                <h1 class="register-title">{% trans "创建账户" %}</h1>
+                <p class="register-subtitle">{% trans "加入MrDoc，开始您的文档管理之旅" %}</p>
+            </div>
+            
+            {% if error_message %}
+            <div class="error-message">
+                {{ error_message }}
+            </div>
+            {% endif %}
+            
+            {% if success_message %}
+            <div class="success-message">
+                {{ success_message }}
+            </div>
+            {% endif %}
+            
+            <form method="post" action="{% url 'register' %}">
                 {% csrf_token %}
-                <div class="layui-form-item">
-                    <img src="{% static 'mrdoc_logo_ridus.png' %}" style="width: 60px;height: 60px;margin-bottom: 10px;" />
-                    <h3><strong>{% trans "注册" %} - {% if site_name != None %}{{site_name}} {% else %}{% trans "觅思文档" %}{% endif %}</strong></h3>
+                <div class="form-group">
+                    <input type="text" name="username" class="form-control" placeholder="{% trans '用户名' %}" required>
                 </div>
-                <span style='color:red;margin-bottom: 10px;'>{{ errormsg }}</span>
-                {% if enable_register_code %}
-                <div class="layui-form-item">
-                    <div class="layui-input-inline">
-                      <input type="text" name="register_code" required  lay-verify="required" placeholder="请输入注册码" autocomplete="off" class="layui-input" >
+                
+                <div class="form-group">
+                    <input type="email" name="email" class="form-control" placeholder="{% trans '邮箱地址' %}" required>
+                </div>
+                
+                <div class="form-group">
+                    <input type="password" name="password" class="form-control" placeholder="{% trans '密码' %}" required>
+                    <div class="password-requirements">
+                        {% trans "密码至少包含8个字符，建议包含字母、数字和特殊字符" %}
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <input type="password" name="confirm_password" class="form-control" placeholder="{% trans '确认密码' %}" required>
+                </div>
+                
+                {% if enable_captcha %}
+                <div class="form-group">
+                    <div class="captcha-container">
+                        <input type="text" name="captcha" class="form-control captcha-input" placeholder="{% trans '验证码' %}" required>
+                        <img src="{% url 'captcha' %}" alt="验证码" class="captcha-image" onclick="this.src='{% url 'captcha' %}?'+Math.random();">
                     </div>
                 </div>
                 {% endif %}
-                <div class="layui-form-item">
-                    <div class="layui-input-inline">
-                      <input type="text" name="username" required  lay-verify="required" placeholder="请输入用户名，小写英文字母或数字，不少于5位" autocomplete="off" class="layui-input" value="{{username}}">
-                    </div>
-                </div>
-                <div class="layui-form-item">
-                    <div class="layui-input-inline">
-                      <input type="email" name="email" required  lay-verify="required" placeholder="请输入电子邮箱" autocomplete="off" class="layui-input" value="{{email}}">
-                    </div>
-                </div>
-                <div class="layui-form-item">
-                    <div class="layui-input-inline">
-                      <input type="password" name="password" required  lay-verify="required" placeholder="请输入密码，不少于6位" autocomplete="off" class="layui-input" value="{{password}}">
-                    </div>
-                </div>
-                <div class="layui-form-item">
-                    <div class="layui-input-inline">
-                        <input type="text" class="layui-input" placeholder="请输入验证码" name="check_code" autocomplete="off">
-                            <img src="{% url 'check_code' %}" onclick="ChangeCode(this);">
-                            <script>
-                                // 点击一次,更改图片内容,
-                                function ChangeCode(ths){
-                                    ths.src = "{% url 'check_code' %}?t=" + Date.now();
-                                }
-                            </script>
-                    </div>
-                </div>
-                <div class="layui-form-item">
-                    <div class="layui-input-inline">
-                        <button class="layui-btn layui-btn-fluid layui-btn-radius  layui-btn-normal" lay-submit lay-filter="formDemo" type="submit">注册并登录</button>
-                    </div>
-                </div>
-                 <a href="{% url 'login' %}" class="register-link">{% trans "返回登录" %}</a>
-                 <a href="{% url 'pro_list' %}" class="register-link">{% trans "返回首页" %}</a>
-                 <hr>
-                 <span style="font-size: 12px;color: #666;">觅思文档 - 私有云知识库部署方案</span>
-                {% if beian_code != None and beian_code != '' %}
-                <br>
-                <a style="font-size: 12px;color: #666;" href="http://beian.miit.gov.cn/" target="_blank">{{beian_code}}</a>
-                {% endif %}
+                
+                <button type="submit" class="btn-register">{% trans "注册" %}</button>
             </form>
+            
+            <div class="register-links">
+                <span class="register-footer-text">{% trans "已有账户？" %}</span>
+                <a href="{% url 'login' %}" class="register-link">{% trans "立即登录" %}</a>
+            </div>
+            
+            <div class="register-footer">
+                <p class="register-footer-text">
+                    {% trans "觅思文档 - 专业的文档管理系统" %}
+                </p>
+            </div>
         </div>
     </div>
 </body>

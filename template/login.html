@@ -14,103 +14,254 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 	<link rel="stylesheet" href="{% static 'layui/css/layui.css' %}" crossorigin="anonymous">
     <link rel="icon" href="{% static 'search/mrdoc_logo_300.png' %}" sizes="192x192" />
+    <link rel="stylesheet" href="{% static 'mrdoc/mrdoc-unified.css' %}" />
     <style>
         body{
-            background-color: #fafafa;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             text-align: center;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            font-family: var(--font-family);
         }
+        
         .container{
             display: flex;
-            display: -webkit-flex;
             justify-content: center;
             align-items: center;
+            width: 100%;
+            padding: var(--spacing-md);
         }
+        
         .login-form{
-            margin-top: 8%;
-            padding: 20px 50px 20px 60px;
-            background-color: #fff;
-            -webkit-box-shadow: #666 0px 0px 10px;
-           -moz-box-shadow: #666 0px 0px 10px;
-           box-shadow: #666 0px 0px 10px;
+            background-color: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-xl);
+            padding: var(--spacing-2xl);
+            max-width: 400px;
+            width: 100%;
+            animation: fadeIn 0.6s ease-out;
         }
-        .register-link{
-            font-size: 12px;
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: var(--spacing-xl);
         }
-        button.layui-btn-normal{
-            background-color: #2176ff !important;
+        
+        .login-logo {
+            width: 80px;
+            height: 80px;
+            margin-bottom: var(--spacing-lg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
         }
-        /* 移动端输入框样式 */
-        @media screen and (max-width: 450px){
-            .layui-form-item .layui-input-inline {
-                display: block;
-                float: none;
-                left: -3px;
-                width: auto;
-                margin: 0;
+        
+        .login-title {
+            font-size: var(--font-size-2xl);
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .login-subtitle {
+            color: var(--text-secondary);
+            font-size: var(--font-size-base);
+        }
+        
+        .form-group {
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: var(--spacing-md);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: var(--font-size-base);
+            transition: all var(--transition-fast);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .form-control::placeholder {
+            color: var(--text-muted);
+        }
+        
+        .btn-login {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            font-size: var(--font-size-base);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .btn-login:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-login:active {
+            transform: translateY(0);
+        }
+        
+        .login-links {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: var(--spacing-sm);
+        }
+        
+        .login-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: var(--font-size-sm);
+            transition: color var(--transition-fast);
+        }
+        
+        .login-link:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+        
+        .login-footer {
+            margin-top: var(--spacing-xl);
+            padding-top: var(--spacing-lg);
+            border-top: 1px solid var(--border-light);
+            text-align: center;
+        }
+        
+        .login-footer-text {
+            font-size: var(--font-size-sm);
+            color: var(--text-muted);
+        }
+        
+        .error-message {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-lg);
+            font-size: var(--font-size-sm);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        
+        .captcha-container {
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: center;
+        }
+        
+        .captcha-input {
+            flex: 1;
+        }
+        
+        .captcha-image {
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: opacity var(--transition-fast);
+        }
+        
+        .captcha-image:hover {
+            opacity: 0.8;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
-        h3,h3 a{
-            color: #666;
+        
+        /* 移动端适配 */
+        @media screen and (max-width: 450px){
+            .login-form {
+                padding: var(--spacing-lg);
+                margin: var(--spacing-sm);
+            }
+            
+            .login-logo {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .login-title {
+                font-size: var(--font-size-xl);
+            }
+            
+            .login-links {
+                flex-direction: column;
+                gap: var(--spacing-md);
+            }
         }
     </style>
 </head>
-<body background="{% static 'PearAdminLayui/admin/images/background.jpg' %}" style="background-repeat: no-repeat;background-size: cover;min-height: 100vh;">
+<body>
     <div class="container">
-        <div></div>
-        <div></div>
         <div class="login-form">
-            <form class="layui-form" action=""  method='POST'>
+            <div class="login-header">
+                <img src="{% static 'search/mrdoc_logo_300.png' %}" alt="MrDoc" class="login-logo">
+                <h1 class="login-title">{% trans "欢迎回来" %}</h1>
+                <p class="login-subtitle">{% trans "登录您的MrDoc账户" %}</p>
+            </div>
+            
+            {% if error_message %}
+            <div class="error-message">
+                {{ error_message }}
+            </div>
+            {% endif %}
+            
+            <form method="post" action="{% url 'login' %}">
                 {% csrf_token %}
-                <div class="layui-form-item">
-                    <img src="{% static 'mrdoc_logo_ridus.png' %}" style="width: 60px;height: 60px;margin-bottom: 10px;" />
-                    <h3><strong>{% trans "登录" %} - <a href="/">{% if site_name != None %}{{site_name}} {% else %}{% trans "觅思文档" %}{% endif %}</a></strong></h3>
+                <div class="form-group">
+                    <input type="text" name="username" class="form-control" placeholder="{% trans '用户名' %}" required>
                 </div>
-                <span style='color:red;margin-bottom: 10px;'>{{ errormsg }}</span>
-                <div class="layui-form-item">
-                    <div class="layui-input-inline login-input">
-                      <input type="text" name="username" required  lay-verify="required" placeholder="请输入用户名" autocomplete="off" class="layui-input" value="{{username}}">
-                    </div>
+                
+                <div class="form-group">
+                    <input type="password" name="password" class="form-control" placeholder="{% trans '密码' %}" required>
                 </div>
-                <div class="layui-form-item">
-                    <div class="layui-input-inline login-input">
-                      <input type="password" name="password" required  lay-verify="required" placeholder="请输入密码" autocomplete="off" class="layui-input" value="{{pwd}}">
-                    </div>
-                </div>
-                {% if enable_login_check_code == 'on' %}
-                <div class="layui-form-item">
-                    <div class="layui-input-inline">
-                        <input type="text" class="layui-input" placeholder="请输入验证码" name="check_code" autocomplete="off">
-                            <img src="{% url 'check_code' %}" onclick="ChangeCode(this);">
-                            <script>
-                                // 点击一次,更改图片内容,
-                                function ChangeCode(ths){
-                                    ths.src = "{% url 'check_code' %}?t=" + Date.now();
-                                }
-                            </script>
+                
+                {% if enable_captcha %}
+                <div class="form-group">
+                    <div class="captcha-container">
+                        <input type="text" name="captcha" class="form-control captcha-input" placeholder="{% trans '验证码' %}" required>
+                        <img src="{% url 'captcha' %}" alt="验证码" class="captcha-image" onclick="this.src='{% url 'captcha' %}?'+Math.random();">
                     </div>
                 </div>
                 {% endif %}
-                <div class="layui-form-item">
-                    <div class="layui-input-inline login-input">
-                        <button class="layui-btn layui-btn-fluid layui-btn-radius  layui-btn-normal" lay-submit lay-filter="formDemo" type="submit">{% trans "登录" %}</button>
-                    </div>
-                </div>
-                {% if close_register == 'on' %}
-                <a class="register-link">{% trans "本站暂不开放注册" %}</a>&nbsp;
-                {% else %}
-                <a href="{% url 'register' %}" class="register-link">{% trans "注册账号" %}</a>&nbsp;
-                {% endif %}
-                {% if enable_email == 'on' %}
-                <a href="{% url 'forget_pwd' %}" class="register-link">{% trans "忘记密码" %}</a>
-                {% endif %}
-                <a href="{% url 'pro_list' %}" class="register-link">{% trans "返回首页" %}</a>
-                <hr>
-                <span style="font-size: 12px;color: #666;">觅思文档 - 私有云知识库部署方案</span>
-                {% if beian_code != None and beian_code != '' %}
-                <br>
-                <a style="font-size: 12px;color: #666;" href="http://beian.miit.gov.cn/" target="_blank">{{beian_code}}</a>
-                {% endif %}
+                
+                <button type="submit" class="btn-login">{% trans "登录" %}</button>
             </form>
+            
+            <div class="login-links">
+                <a href="{% url 'register' %}" class="login-link">{% trans "注册账户" %}</a>
+                <a href="{% url 'forget_pwd' %}" class="login-link">{% trans "忘记密码？" %}</a>
+            </div>
+            
+            <div class="login-footer">
+                <p class="login-footer-text">
+                    {% trans "觅思文档 - 专业的文档管理系统" %}
+                </p>
+            </div>
         </div>
     </div>
 </body>
