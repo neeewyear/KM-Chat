@@ -2,6 +2,7 @@
 whoosh_index/
 volumes/
 __pycache__/
+config/config.ini
 *.py[cod]
 *$py.class
 

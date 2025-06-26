@@ -485,3 +485,164 @@ def search_similar_documents_public(request):
             'status': False,
             'message': '搜索失败'
         })
+
+
+# AI搜索相关视图
+@login_required
+def ai_search_page(request):
+    """AI智能搜索页面"""
+    try:
+        return render(request, 'app_vector/ai_search.html')
+    except Exception as e:
+        logger.error(f"Error rendering AI search page: {e}")
+        return render(request, '404.html', status=404)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def api_ai_search(request):
+    """AI智能搜索API"""
+    try:
+        from .ai_search_service import ai_search_service
+        
+        query = request.data.get('query', '').strip()
+        top_k = request.data.get('top_k', 10)
+        
+        if not query:
+            return Response({
+                'code': 1,
+                'message': '搜索查询不能为空'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 执行智能搜索
+        result = ai_search_service.smart_search(query, top_k)
+        
+        # 保存搜索历史
+        ai_search_service.save_search_history(query, result.get('total_results', 0))
+        
+        return Response({
+            'code': 0,
+            'data': result
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in AI search: {e}")
+        return Response({
+            'code': 1,
+            'message': 'AI搜索失败'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_search_suggestions(request):
+    """获取搜索建议API"""
+    try:
+        from .ai_search_service import ai_search_service
+        
+        query = request.GET.get('query', '').strip()
+        
+        if not query:
+            return Response({
+                'code': 0,
+                'data': []
+            })
+        
+        suggestions = ai_search_service.get_search_suggestions(query)
+        
+        return Response({
+            'code': 0,
+            'data': suggestions
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting search suggestions: {e}")
+        return Response({
+            'code': 1,
+            'message': '获取搜索建议失败'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def api_ask_question(request):
+    """直接提问API"""
+    try:
+        from .ai_search_service import ai_search_service
+        
+        question = request.data.get('question', '').strip()
+        top_k = request.data.get('top_k', 5)
+        
+        if not question:
+            return Response({
+                'code': 1,
+                'message': '问题不能为空'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 搜索相关文档
+        search_results = ai_search_service.search_documents(question, top_k)
+        
+        # 生成答案
+        answer, referenced_docs = ai_search_service.answer_question(question, search_results)
+        
+        result = {
+            'question': question,
+            'answer': answer,
+            'search_results': search_results,
+            'referenced_docs': referenced_docs,
+            'total_results': len(search_results)
+        }
+        
+        return Response({
+            'code': 0,
+            'data': result
+        })
+        
+    except Exception as e:
+        logger.error(f"Error asking question: {e}")
+        return Response({
+            'code': 1,
+            'message': '提问失败'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def api_ai_search_status(request):
+    """AI搜索服务状态检查"""
+    try:
+        from .ai_search_service import ai_search_service
+        
+        # 检查OpenAI服务
+        openai_available = ai_search_service.client is not None
+        
+        # 检查向量服务
+        try:
+            from .services import vector_service
+            vector_available = True
+            milvus_connected = vector_service.milvus_service.connect()
+            if milvus_connected:
+                vector_service.milvus_service.disconnect()
+        except Exception as e:
+            vector_available = False
+            milvus_connected = False
+            logger.error(f"Vector service error: {e}")
+        
+        status_info = {
+            'openai_available': openai_available,
+            'vector_available': vector_available,
+            'milvus_connected': milvus_connected,
+            'model_name': ai_search_service.model_name,
+            'service_ready': openai_available and vector_available
+        }
+        
+        return Response({
+            'code': 0,
+            'data': status_info
+        })
+        
+    except Exception as e:
+        logger.error(f"Error checking AI search status: {e}")
+        return Response({
+            'code': 1,
+            'message': '状态检查失败'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

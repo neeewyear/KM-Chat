@@ -1,0 +1,29 @@
+# AI搜索功能配置文件示例
+# 复制此文件为 ai_search_config.ini 并根据实际情况修改配置
+
+[openai]
+# OpenAI API配置
+api_key = your-openai-api-key-here
+base_url = https://api.openai.com/v1
+model = gpt-3.5-turbo
+max_tokens = 2000
+temperature = 0.7
+
+[milvus]
+# Milvus向量数据库配置
+host = localhost
+port = 19530
+collection_name = mrdoc_documents
+dimension = 1536
+
+[search]
+# 搜索相关配置
+default_top_k = 10
+similarity_threshold = 0.5
+cache_timeout = 3600
+
+[ui]
+# 界面配置
+enable_suggestions = true
+enable_status_monitor = true
+max_suggestions = 5 

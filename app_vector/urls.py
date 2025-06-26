@@ -17,6 +17,13 @@ urlpatterns = [
     path('test/', views.vector_test_page, name='test'),
     path('status/', views.vector_status_page, name='status'),
     
+    # AI智能搜索相关
+    path('ai-search/', views.ai_search_page, name='ai_search'),
+    path('api/ai-search/', views.api_ai_search, name='api_ai_search'),
+    path('api/ai-search/suggestions/', views.api_search_suggestions, name='api_search_suggestions'),
+    path('api/ai-search/ask/', views.api_ask_question, name='api_ask_question'),
+    path('api/ai-search/status/', views.api_ai_search_status, name='api_ai_search_status'),
+    
     # API接口
     path('api/status/', views.api_vector_status, name='api_status'),
     path('api/search/', views.api_search_similar_documents, name='api_search'),
