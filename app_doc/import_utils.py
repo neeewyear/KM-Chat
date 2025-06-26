@@ -299,11 +299,16 @@ class ImportMinerUDoc():
 
     def get_file_extension(self):
         """获取文件扩展名"""
-        return os.path.splitext(self.file_path)[1].lower()
+        extension = os.path.splitext(self.file_path)[1].lower()
+        logger.info(f"文件路径: {self.file_path}, 扩展名: {extension}")
+        return extension
 
     def is_supported_file(self):
         """检查文件是否支持"""
-        return self.get_file_extension() in self.supported_extensions
+        extension = self.get_file_extension()
+        is_supported = extension in self.supported_extensions
+        logger.info(f"文件扩展名: {extension}, 是否支持: {is_supported}, 支持格式: {list(self.supported_extensions.keys())}")
+        return is_supported
 
     def process_with_mineru(self):
         """使用MinerU处理文件"""
@@ -422,8 +427,3 @@ class ImportMinerUDoc():
             if os.path.exists(self.file_path):
                 os.remove(self.file_path)
             return {'status': False, 'data': _('处理异常: {}').format(str(e))}
-
-
-if __name__ == '__main__':
-    imp = ImportZipProject()
-    imp.read_zip(r"D:\Python XlsxWriter模块中文文档_2020-06-16.zip")

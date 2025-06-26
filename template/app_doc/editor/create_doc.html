@@ -1,7 +1,7 @@
 {% extends 'app_doc/editor/create_base.html' %}
 {% load static %}
 {% load i18n %}
-{% block title %}{{editor_type}}{% endblock %}
+{% block title %}{% trans "新建文档" %}{% endblock %}
 
 {% block head_toolbar %}
     <ul class="layui-nav layui-form">
@@ -164,6 +164,15 @@
 
 {% block custom_script %}
     <script> 
+        // 设置CSRF token
+        $.ajaxSetup({
+            headers: {"X-CSRFToken":'{{ csrf_token }}'},
+        });
+        
+        // 定义全局变量
+        var editor_mode = {{ editor_mode }};
+        console.log('编辑器模式:', editor_mode);
+        
         form.val("left_form",{
             "select_editor_mode":'{{editor_mode}}'
         })
@@ -308,58 +317,25 @@
                 layer.msg('请输入文档标题！');
                 $('button.layui-btn').attr("disabled",false);
                 $('button.layui-btn').removeClass('layui-btn-disabled');
+                return;
             }
-            else if(data.project == ""){
+            if(data.project == ""){
                 layer.msg('请选择文集！');
                 $('button.layui-btn').attr("disabled",false);
                 $('button.layui-btn').removeClass('layui-btn-disabled');
+                return;
             }
-            else{
-                //发布按钮设为禁用
-                $("#create_doc").attr({"disabled":"disabled"});
-                layer.load(); // 加载提示
-                $.ajax({
-                    url:"{% url 'create_doc' %}",
-                    type:'post',
-                    data:data,
-                    success:function(r){
-                        if(r.status){
-                            //创建成功
-                            layer.closeAll("loading"); //关闭加载层
-                            window.localStorage.removeItem('mrdoc_doc_cache') // 清空文档缓存
-                            if(status === 1){
-                                layer.msg('发布成功',{time:1000},function(){
-                                    md_changed = false;
-                                    //跳转到文档修改
-                                    window.location.href = "/modify_doc/"+r.data.doc+"/";
-                                });
-                            }else{
-                                layer.msg('保存成功',{time:1000},function(){
-                                    md_changed = false;
-                                    //跳转到文档修改
-                                    window.location.href = "/modify_doc/"+r.data.doc+"/";
-                                });
-                            }
-                        }else{
-                            //创建失败
-                            layer.closeAll("loading"); //关闭加载层
-                            layer.msg('发布文档失败:'+r.data);
-                            //恢复按钮状态
-                            $('button.layui-btn').attr("disabled",false);
-                            $('button.layui-btn').removeClass('layui-btn-disabled');
-                        }
-                    },
-                    error:function(){
-                            //创建失败
-                            layer.closeAll("loading"); //关闭加载层
-                            layer.msg('发布文档异常！');
-                            //恢复按钮状态
-                            $('button.layui-btn').attr("disabled",false);
-                            $('button.layui-btn').removeClass('layui-btn-disabled');
-
-                    }
-                })
-            }
+            $.post("{% url 'create_doc' %}",data,function(r){
+                if(r.status){
+                    layer.msg('文档创建成功！',{icon:1},function(){
+                        window.location.href = r.data;
+                    });
+                }else{
+                    layer.msg(r.data,{icon:2});
+                    $('button.layui-btn').attr("disabled",false);
+                    $('button.layui-btn').removeClass('layui-btn-disabled');
+                }
+            });
         };
 
         $("#pub_doc").click(function(){
@@ -491,11 +467,18 @@
             data:{'project':$("#project").val(),'editor_mode':editor_mode},
             before: function(obj){
                 layer.load(1);
+                console.log('PDF上传开始，文件信息:', obj);
             },
             accept: 'file',
-            exts:'pdf',
+            exts:'pdf|PDF',
             field:'local_doc',
+            choose: function(obj){
+                console.log('选择PDF文件:', obj);
+                var files = obj.pushFile();
+                console.log('选择的文件:', files);
+            },
             done: function(res, index, upload){
+                console.log('PDF上传完成，响应:', res);
                 if(res.code == 0){
                     if(editor_mode == 3){
                         editor.addValue(res.data)
@@ -511,7 +494,8 @@
                     layer.msg(res.data)
                 }
             },
-            error:function(){
+            error:function(index, upload){
+                console.log('PDF上传错误:', index, upload);
                 layer.closeAll('loading');
                 layer.msg("系统异常，请稍后再试！")
             },
@@ -582,6 +566,10 @@
                 layer.msg("系统异常，请稍后再试！")
             },
         });
+
+        // 测试CSRF token
+        console.log('CSRF Token:', '{{ csrf_token }}');
+        console.log('CSRF Token Length:', '{{ csrf_token }}'.length);
 
     </script>
     <!-- 在线表格文档根据窗口高度调整表格高度 -->

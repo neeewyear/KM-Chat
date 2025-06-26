@@ -156,6 +156,7 @@ class ImportLocalDoc(APIView):
     permission_classes = [IsAuthenticated]
 
     # 上传文件
+    @csrf_exempt
     def post(self,request):
         project = request.data.get("project",'')
         editor_mode = request.data.get("editor_mode",0)

@@ -250,12 +250,12 @@
         {% endif %}
         <script>
             $.ajaxSetup({
-                data: {csrfmiddlewaretoken: '{{ csrf_token }}' },
+                headers: {"X-CSRFToken": "{{ csrf_token }}"}
             });
     
             //未保存离开提示
-            window.onbeforeunload =function() {
-            　　 if(md_changed){
+            window.onbeforeunload = function() {
+                if(md_changed){
                     return 1;
                 }else{
                     return null;
