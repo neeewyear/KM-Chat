@@ -131,11 +131,17 @@ class RAGService:
                 "content": context_prompt
             })
             
+            # 确保 max_tokens 在有效范围内
+            max_tokens = min(max(1, self.max_tokens), 8192)
+            
+            # 记录调试信息
+            logger.info(f"Calling OpenAI API with model={self.model_name}, max_tokens={max_tokens}, temperature={self.temperature}")
+            
             # 调用OpenAI API
             response = self.client.chat.completions.create(
                 model=self.model_name,
                 messages=messages,
-                max_tokens=self.max_tokens,
+                max_tokens=max_tokens,
                 temperature=self.temperature
             )
             
@@ -146,6 +152,9 @@ class RAGService:
             
         except Exception as e:
             logger.error(f"Error generating response: {e}")
+            # 如果是 max_tokens 错误，提供更详细的错误信息
+            if "max_tokens" in str(e).lower():
+                return f"抱歉，生成回复时出现错误：max_tokens 参数无效。当前设置：{self.max_tokens}，有效范围：[1, 8192]。错误详情：{str(e)}", 0
             return f"抱歉，生成回复时出现错误：{str(e)}", 0
     
     def chat(self, user, session_id: int, message: str) -> Dict:
