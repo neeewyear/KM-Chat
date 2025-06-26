@@ -1563,7 +1563,7 @@ def admin_center_menu(request):
         },
         {
             "id": 5,
-            "title": _("Milvus知识库管理"),
+            "title": _("知识库管理"),
             "type": 1,
             "icon": "layui-icon layui-icon-database",
             "openType": "_iframe",  # 关键，防止侧边栏重复
@@ -1697,11 +1697,11 @@ def admin_center_menu(request):
     ]
     return JsonResponse(menu_data,safe=False)
 
-# Milvus知识库管理
+# 知识库管理
 @superuser_only
 @logger.catch()
 def admin_milvus(request):
-    """Milvus知识库管理页面"""
+    """知识库管理页面"""
     return render(request, 'app_admin/admin_milvus.html', locals())
 
 

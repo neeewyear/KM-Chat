@@ -22,8 +22,8 @@ urlpatterns = [
     path('api/doc_history_detail/', views.AdminDocHistoryDetail.as_view(), name="api_doc_history_detail"),  # 文档历史记录详情接口
     path('doctemp_manage/',views.admin_doctemp,name='doctemp_manage'), # 文档模板管理
     
-    # Milvus知识库管理
-    path('milvus_manage/',views.admin_milvus,name='milvus_manage'), # Milvus知识库管理
+    # 知识库管理
+    path('milvus_manage/',views.admin_milvus,name='milvus_manage'), # 知识库管理
     path('api/milvus/collections/', views.AdminMilvusList.as_view(), name="api_milvus_collections"),  # Milvus集合列表接口
     path('api/milvus/collections/<str:collection_name>/', views.AdminMilvusDetail.as_view(), name="api_milvus_collection_detail"),  # Milvus集合详情接口
     

@@ -89,7 +89,7 @@ def test_milvus_admin():
             menu_data = json.loads(response.content)
             milvus_menu = None
             for item in menu_data:
-                if item.get('title') == 'Milvus知识库管理':
+                if item.get('title') == '知识库管理':
                     milvus_menu = item
                     break
             
