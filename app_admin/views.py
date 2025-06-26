@@ -371,8 +371,6 @@ def admin_overview(request):
         attachment_cnt = Attachment.objects.all().count()
         # 文档动态
         doc_active_list = Doc.objects.all().order_by('-modify_time')[:5]
-        # 文集列表
-        pro_list = Project.objects.all().order_by('-create_time')
         return render(request,'app_admin/admin_overview.html',locals())
     else:
         pass

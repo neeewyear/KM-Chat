@@ -3081,9 +3081,10 @@ def download_doc_md(request,doc_id):
 @require_http_methods(['GET','POST'])
 def manage_overview(request):
     if request.method == 'GET':
-        pro_list = Project.objects.filter(create_user=request.user).order_by('-create_time')
+        # 计算文集总数（自己的文集 + 协作的文集）
+        own_pro_cnt = Project.objects.filter(create_user=request.user).count()
         colla_pro_cnt = ProjectCollaborator.objects.filter(user=request.user).count()
-        pro_cnt = pro_list.count() + colla_pro_cnt # 文集总数
+        pro_cnt = own_pro_cnt + colla_pro_cnt # 文集总数
         doc_cnt = Doc.objects.filter(create_user=request.user).count() # 文档总数
         total_tag_cnt = Tag.objects.filter(create_user=request.user).count()
         img_cnt = Image.objects.filter(user=request.user).count()
@@ -3093,7 +3094,7 @@ def manage_overview(request):
 
         return render(request,'app_doc/manage/manage_overview.html',locals())
     else:
-        pass
+        return JsonResponse({'status': False, 'data': _('请求方法不支持')})
 
 
 # 个人中心 - 文档标签

@@ -18,8 +18,6 @@ msgstr ""
 "X-Generator: Poedit 2.4.2\n"
 
 #: .\app_admin\utils.py:40
-msgid "MrDoc - 重置密码验证码"
-msgstr "MrDoc -重置密碼驗證碼"
 
 #: .\app_admin\utils.py:41
 msgid "你的验证码为：{}，验证码30分钟内有效！"
@@ -413,8 +411,6 @@ msgid "无权操作此文集"
 msgstr "無權操作此文集"
 
 #: .\app_api\views_app.py:538 .\app_doc\views.py:1032
-msgid "请确认文档标题、文集正确"
-msgstr "請確認文檔標題、文集正確"
 
 #: .\app_api\views_app.py:540
 msgid "api新建文档异常"
@@ -453,8 +449,6 @@ msgid "创建成功"
 msgstr "創建成功"
 
 #: .\app_api\views_app.py:664 .\app_doc\views.py:1776
-msgid "模板标题不能为空"
-msgstr "模板標題不能為空"
 
 #: .\app_api\views_app.py:668
 msgid "api创建文档模板出错"
@@ -1154,8 +1148,6 @@ msgstr "請輸入訪問碼"
 #: .\template\app_doc\share\share_check.html:13
 #: .\template\app_doc\share\share_doc.html:15
 #: .\template\app_doc\tag_doc_base.html:15
-msgid "站点标题"
-msgstr "站點標題"
 
 #: .\template\app_doc\check_viewcode.html:57
 msgid "你正在访问："
@@ -1708,28 +1700,16 @@ msgid "删除了文档"
 msgstr "刪除了文檔"
 
 #: .\template\app_doc\manage\manage_overview.html:102
-msgid "快速草稿"
-msgstr "快速草稿"
 
 #: .\template\app_doc\manage\manage_overview.html:108
-msgid "标题"
-msgstr "標題"
 
 #: .\template\app_doc\manage\manage_overview.html:124
-msgid "指定用户"
-msgstr "指定用戶"
 
 #: .\template\app_doc\manage\manage_overview.html:133
-msgid "文本域"
-msgstr "文本域"
 
 #: .\template\app_doc\manage\manage_overview.html:140
-msgid "保存草稿"
-msgstr "保存草稿"
 
 #: .\template\app_doc\manage\manage_overview.html:141
-msgid "重置"
-msgstr "重置"
 
 #: .\template\app_doc\manage\manage_overview.html:153
 msgid "支持项目发展"
@@ -1896,8 +1876,6 @@ msgid "浏览权限"
 msgstr "瀏覽權限"
 
 #: .\template\app_doc\manage\manage_project_options.html:90
-msgid "指定用户可见"
-msgstr "指定用戶可見"
 
 #: .\template\app_doc\manage\manage_project_options.html:91
 msgid "访问码可见"
