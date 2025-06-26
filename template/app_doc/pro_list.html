@@ -124,6 +124,40 @@
     <!-- 表单风格结束 -->
 </div>
 
+<!-- AI功能入口 -->
+{% if request.user.is_authenticated %}
+<div class="layui-container" style="margin-top: 15px; margin-bottom: 15px;">
+    <div class="layui-row">
+        <div class="layui-col-md12">
+            <div class="layui-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 8px;">
+                <div class="layui-card-body" style="padding: 20px; text-align: center;">
+                    <h3 style="color: white; margin-bottom: 15px; font-size: 18px;">
+                        <i class="layui-icon layui-icon-util" style="margin-right: 8px;"></i>
+                        AI 智能助手
+                    </h3>
+                    <div class="layui-row">
+                        <div class="layui-col-md6">
+                            <a href="{% url 'app_vector:ai_search' %}" class="layui-btn layui-btn-lg layui-btn-normal" style="width: 80%; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);">
+                                <i class="layui-icon layui-icon-search" style="margin-right: 8px;"></i>
+                                AI 智能搜索
+                            </a>
+                            <p style="color: rgba(255,255,255,0.8); margin-top: 8px; font-size: 12px;">基于文档内容的智能搜索和问答</p>
+                        </div>
+                        <div class="layui-col-md6">
+                            <a href="{% url 'app_vector:chat' %}" class="layui-btn layui-btn-lg layui-btn-normal" style="width: 80%; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);">
+                                <i class="layui-icon layui-icon-dialogue" style="margin-right: 8px;"></i>
+                                智能问答
+                            </a>
+                            <p style="color: rgba(255,255,255,0.8); margin-top: 8px; font-size: 12px;">与AI助手进行智能对话</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- 主体 -->
 <div class="layui-container project-list-content" style="display:flex;flex-wrap:wrap;">
     <!-- 遍历文集列表 -->

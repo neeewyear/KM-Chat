@@ -1,3 +1,5 @@
+{% load static %}
+{% load i18n %}
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -608,7 +610,13 @@
         <div class="main-content">
             <!-- 搜索头部 -->
             <div class="search-header">
-                <h1>🔍 AI智能搜索</h1>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h1>🔍 AI智能搜索</h1>
+                    <a href="{% url 'pro_list' %}" class="layui-btn layui-btn-primary" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white;">
+                        <i class="layui-icon layui-icon-home" style="margin-right: 5px;"></i>
+                        返回首页
+                    </a>
+                </div>
                 <p>基于本地文档的智能搜索和问答系统</p>
                 <div class="search-input-container">
                     <input type="text" class="search-input" id="searchInput" placeholder="输入搜索关键词或直接提问..." autocomplete="off">
