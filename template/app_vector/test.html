@@ -1,0 +1,124 @@
+{% extends 'app_doc/docs_base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}向量搜索测试 - MrDoc{% endblock %}
+
+{% block head_toolbar %}
+    <a class="btn pull-left" aria-label="" href="javascript:history.back();">
+        <i class="layui-icon layui-icon-left"></i> <span class="layui-hide-xs">{% trans "返回" %}</span>
+    </a>
+{% endblock %}
+
+{% block content %}
+<div class="layui-container">
+    <div class="layui-row">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">
+                    <h3>向量搜索测试页面</h3>
+                    <p>这是一个测试页面，用于验证页面渲染和向量服务状态</p>
+                </div>
+                <div class="layui-card-body">
+                    <div class="layui-text">
+                        <p>如果您能看到这个页面，说明：</p>
+                        <ul>
+                            <li>✅ 页面模板渲染正常</li>
+                            <li>✅ URL路由配置正确</li>
+                            <li>✅ 用户认证工作正常</li>
+                        </ul>
+                        
+                        <div style="margin: 20px 0;">
+                            <button class="layui-btn layui-btn-normal" id="check-status">
+                                <i class="layui-icon layui-icon-refresh"></i> 检查向量服务状态
+                            </button>
+                        </div>
+                        
+                        <div id="status-result" style="display: none;">
+                            <h4>向量服务状态：</h4>
+                            <ul id="status-list">
+                            </ul>
+                        </div>
+                        
+                        <div style="margin-top: 20px;">
+                            <a href="{% url 'app_vector:vector_search_page' %}" class="layui-btn layui-btn-normal">
+                                <i class="layui-icon layui-icon-search"></i> 尝试访问向量搜索页面
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+layui.use(['layer'], function(){
+    var layer = layui.layer;
+    
+    // 检查向量服务状态
+    $('#check-status').click(function(){
+        var btn = $(this);
+        var originalText = btn.html();
+        
+        btn.html('<i class="layui-icon layui-icon-loading layui-anim layui-anim-rotate layui-anim-loop"></i> 检查中...');
+        btn.attr('disabled', true);
+        
+        $.ajax({
+            url: '{% url "app_vector:api_vector_status" %}',
+            type: 'GET',
+            success: function(response){
+                var statusList = $('#status-list');
+                statusList.empty();
+                
+                // 显示各项状态
+                var items = [
+                    {name: 'pymilvus库', status: response.pymilvus_available},
+                    {name: '向量服务', status: response.vector_service_available},
+                    {name: 'Milvus连接', status: response.milvus_connected}
+                ];
+                
+                items.forEach(function(item){
+                    var icon = item.status ? 'layui-icon-ok' : 'layui-icon-close';
+                    var color = item.status ? '#5FB878' : '#FF5722';
+                    var text = item.status ? '正常' : '异常';
+                    
+                    statusList.append(`
+                        <li style="color: ${color};">
+                            <i class="layui-icon ${icon}"></i>
+                            ${item.name}: ${text}
+                        </li>
+                    `);
+                });
+                
+                // 显示总体状态
+                var overallStatus = response.status === 'ok' ? '正常' : '异常';
+                var overallColor = response.status === 'ok' ? '#5FB878' : '#FF5722';
+                
+                statusList.append(`
+                    <li style="color: ${overallColor}; font-weight: bold; margin-top: 10px;">
+                        <i class="layui-icon layui-icon-${response.status === 'ok' ? 'ok' : 'close'}"></i>
+                        总体状态: ${overallStatus}
+                    </li>
+                `);
+                
+                $('#status-result').show();
+                
+                if (response.status === 'ok') {
+                    layer.msg('向量服务状态正常！', {icon: 1});
+                } else {
+                    layer.msg('向量服务状态异常，请检查配置', {icon: 2});
+                }
+            },
+            error: function(){
+                layer.msg('检查状态失败，请检查网络连接', {icon: 2});
+            },
+            complete: function(){
+                btn.html(originalText);
+                btn.attr('disabled', false);
+            }
+        });
+    });
+});
+</script>
+{% endblock %} 

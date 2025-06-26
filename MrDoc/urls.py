@@ -33,6 +33,7 @@ urlpatterns = [
     path('admin/',include('app_admin.urls'),), # admin应用
     path('api/',include('app_api.urls')), # 用户 Token API 接口
     path('api_app/',include('app_api.urls_app')), # RESTFUL API 接口
+    path('vector/',include('app_vector.urls')), # 向量数据库接口
     # re_path('^static/(?P<path>.*)$',serve,{'document_root':settings.STATIC_ROOT}),# 静态文件
     re_path('^media/(?P<path>.*)$',serve,{'document_root':settings.MEDIA_ROOT}),# 媒体文件
 ]

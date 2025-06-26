@@ -1,5 +1,6 @@
 # Byte-compiled / optimized / DLL files
 whoosh_index/
+volumes/
 __pycache__/
 *.py[cod]
 *$py.class

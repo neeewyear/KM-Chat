@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>向量搜索 - MrDoc</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/static/mrdoc/mrdoc-docs.css">
+    <style>
+        body {
+            background-color: #f5f5f5;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            color: #333;
+            font-size: 24px;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            color: #666;
+        }
+        .search-card {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .results-card {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .error-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #ff5722;
+            display: none;
+            margin-bottom: 20px;
+        }
+        .doc-item {
+            border: 1px solid #e8e8e8;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #fafafa;
+        }
+        .doc-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .doc-title a {
+            color: #1e9fff;
+            text-decoration: none;
+        }
+        .doc-title a:hover {
+            text-decoration: underline;
+        }
+        .doc-meta {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 8px;
+        }
+        .doc-preview {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+            max-height: 60px;
+            overflow: hidden;
+        }
+        .similarity-score {
+            float: right;
+            background: #5fb878;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        .back-btn {
+            display: inline-block;
+            padding: 8px 15px;
+            background: #1e9fff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .back-btn:hover {
+            background: #0d8aff;
+            color: white;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="javascript:history.back();" class="back-btn">
+            <i class="layui-icon layui-icon-left"></i> 返回
+        </a>
+        
+        <div class="header">
+            <h1>向量搜索</h1>
+            <p>基于文档内容的语义相似度搜索，找到最相关的文档</p>
+        </div>
+        
+        <div class="search-card">
+            <form class="layui-form" id="vector-search-form">
+                {% csrf_token %}
+                <div class="layui-form-item">
+                    <label class="layui-form-label">搜索内容</label>
+                    <div class="layui-input-block">
+                        <textarea name="query" id="query" placeholder="请输入要搜索的内容..." 
+                                  class="layui-textarea" style="min-height: 100px;"></textarea>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">结果数量</label>
+                    <div class="layui-input-inline">
+                        <input type="number" name="top_k" id="top_k" value="10" min="1" max="50" 
+                               class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button type="submit" class="layui-btn layui-btn-normal">
+                            <i class="layui-icon layui-icon-search"></i> 搜索
+                        </button>
+                        <button type="button" class="layui-btn layui-btn-primary" id="clear-btn">
+                            <i class="layui-icon layui-icon-refresh"></i> 清空
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <div class="error-card" id="error-message">
+            <div class="layui-text" style="color: #FF5722;">
+                <i class="layui-icon layui-icon-close-fill"></i>
+                <span id="error-text"></span>
+            </div>
+        </div>
+        
+        <div class="results-card" id="search-results">
+            <h3>搜索结果 <span id="result-count"></span></h3>
+            <div id="results-list"></div>
+        </div>
+    </div>
+
+    <script src="/static/layui/layui.js"></script>
+    <script>
+    layui.use(['form', 'layer'], function(){
+        var form = layui.form;
+        var layer = layui.layer;
+        
+        // 搜索表单提交
+        $('#vector-search-form').on('submit', function(e){
+            e.preventDefault();
+            
+            var query = $('#query').val().trim();
+            var top_k = $('#top_k').val();
+            
+            if (!query) {
+                layer.msg('请输入搜索内容');
+                return;
+            }
+            
+            // 隐藏之前的错误信息和结果
+            $('#error-message').hide();
+            $('#search-results').hide();
+            
+            // 显示加载层
+            var loadIndex = layer.load(1, {shade: [0.1, '#fff']});
+            
+            // 发送搜索请求
+            $.ajax({
+                url: '/vector/search/public/',
+                type: 'POST',
+                data: JSON.stringify({
+                    query: query,
+                    top_k: parseInt(top_k)
+                }),
+                contentType: 'application/json',
+                success: function(response){
+                    layer.close(loadIndex);
+                    
+                    if (response.status) {
+                        displayResults(response.data, response.count);
+                    } else {
+                        showError(response.message || '搜索失败');
+                    }
+                },
+                error: function(xhr, status, error){
+                    layer.close(loadIndex);
+                    
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        showError(xhr.responseJSON.message);
+                    } else {
+                        showError('搜索请求失败，请检查网络连接');
+                    }
+                }
+            });
+        });
+        
+        // 清空按钮
+        $('#clear-btn').click(function(){
+            $('#query').val('');
+            $('#search-results').hide();
+            $('#error-message').hide();
+        });
+        
+        // 显示错误信息
+        function showError(message) {
+            $('#error-text').text(message);
+            $('#error-message').show();
+            $('#search-results').hide();
+        }
+        
+        // 显示搜索结果
+        function displayResults(results, count) {
+            var html = '';
+            
+            if (results.length === 0) {
+                html = '<div class="layui-text">没有找到相关文档</div>';
+            } else {
+                results.forEach(function(item, index) {
+                    var doc = item.doc;
+                    var score = (item.score * 100).toFixed(2);
+                    
+                    html += `
+                    <div class="doc-item">
+                        <div class="doc-title">
+                            <a href="/doc/${doc.id}/" target="_blank">${doc.name}</a>
+                            <span class="similarity-score">相似度: ${score}%</span>
+                        </div>
+                        <div class="doc-meta">
+                            <strong>创建者:</strong> ${doc.create_user} | 
+                            <strong>创建时间:</strong> ${doc.create_time}
+                        </div>
+                        <div class="doc-preview">
+                            <strong>内容预览:</strong> ${doc.pre_content ? doc.pre_content.substring(0, 200) + '...' : '无内容'}
+                        </div>
+                    </div>
+                    `;
+                });
+            }
+            
+            $('#results-list').html(html);
+            $('#result-count').text(`(共找到 ${count} 个相关文档)`);
+            $('#search-results').show();
+        }
+    });
+    </script>
+</body>
+</html> 

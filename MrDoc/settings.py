@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'app_admin', # 管理APP
     'app_doc', # 文档APP
     'app_api', # API APP
+    'app_vector', # 向量数据库APP
     'django.contrib.sitemaps', # 站点地图
     'rest_framework',
     'corsheaders',
@@ -322,3 +323,16 @@ if extend_root_txt == []:
     EXTEND_ROOT_TXT = extend_root_txt
 else:
     EXTEND_ROOT_TXT = extend_root_txt.split(',')
+
+# Milvus向量数据库配置
+MILVUS_HOST = CONFIG.get('milvus', 'host', fallback='localhost')
+MILVUS_PORT = CONFIG.get('milvus', 'port', fallback='19530')
+MILVUS_COLLECTION_NAME = CONFIG.get('milvus', 'collection_name', fallback='mrdoc_documents')
+MILVUS_DIMENSION = CONFIG.getint('milvus', 'dimension', fallback=1536)
+
+# OpenAI配置
+OPENAI_API_KEY = CONFIG.get('openai', 'api_key', fallback='')
+OPENAI_BASE_URL = CONFIG.get('openai', 'base_url', fallback='https://api.openai.com/v1')
+OPENAI_MODEL = CONFIG.get('openai', 'model', fallback='gpt-3.5-turbo')
+OPENAI_MAX_TOKENS = CONFIG.getint('openai', 'max_tokens', fallback=2000)
+OPENAI_TEMPERATURE = CONFIG.getfloat('openai', 'temperature', fallback=0.7)

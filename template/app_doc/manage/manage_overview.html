@@ -144,6 +144,20 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- 向量搜索卡片 -->
+            <div class="layui-card" style="margin-top: 10px;">
+                <div class="layui-card-header">
+                    <i class="layui-icon layui-icon-search"></i> {% trans "智能搜索" %}
+                </div>
+                <div class="layui-card-body">
+                    <p style="color: #666; margin-bottom: 15px;">基于文档内容的语义相似度搜索，帮助您快速找到相关文档。</p>
+                    <a href="{% url 'app_vector:vector_search_page' %}" class="pear-btn pear-btn-success layui-btn-fluid" style="height: 40px; line-height: 40px;">
+                        <i class="layui-icon layui-icon-search"></i> {% trans "开始向量搜索" %}
+                    </a>
+                </div>
+            </div>
+            
             <!-- <div class="layui-card">
                 <div class="layui-card-header">
                     {% trans "链接" %}
