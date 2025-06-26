@@ -21,11 +21,17 @@ urlpatterns = [
     path('api/doc_history/<int:id>/', views.AdminDocHistory.as_view(), name="api_doc_history"),  # 文档历史记录接口
     path('api/doc_history_detail/', views.AdminDocHistoryDetail.as_view(), name="api_doc_history_detail"),  # 文档历史记录详情接口
     path('doctemp_manage/',views.admin_doctemp,name='doctemp_manage'), # 文档模板管理
+    
+    # Milvus知识库管理
+    path('milvus_manage/',views.admin_milvus,name='milvus_manage'), # Milvus知识库管理
+    path('api/milvus/collections/', views.AdminMilvusList.as_view(), name="api_milvus_collections"),  # Milvus集合列表接口
+    path('api/milvus/collections/<str:collection_name>/', views.AdminMilvusDetail.as_view(), name="api_milvus_collection_detail"),  # Milvus集合详情接口
+    
     path('setting/',views.admin_setting,name="sys_setting"), # 应用设置
     path('config',views.admin_site_config,name="site_config"), # 站点配置
     path('forget_pwd/',views.forget_pwd,name='forget_pwd'), # 忘记密码
     # path('send_email_vcode/',views.send_email_vcode,name='send_email_vcode'), # 忘记密码发送邮件验证码
-    # path('send_email_test', views.send_email_test, name='send_email_test'),  # 发送测试邮件
+    path('send_email_test', views.send_email_test, name='send_email_test'),  # 发送测试邮件
     # path('admin_register_code/',views.admin_register_code,name='register_code_manage'), # 注册邀请码管理
     path('check_update/',views.check_update,name='check_update'), # 检测版本更新
     path('admin_center/',views.admin_center,name="admin_center"), # 后台管理

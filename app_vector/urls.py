@@ -13,7 +13,7 @@ urlpatterns = [
     path('api/chat/sessions/<int:session_id>/', views.api_delete_session, name='api_delete_session'),
     
     # 向量搜索相关
-    path('search/', views.vector_search_page, name='search'),
+    path('search/', views.vector_search_page, name='vector_search_page'),
     path('test/', views.vector_test_page, name='test'),
     path('status/', views.vector_status_page, name='status'),
     

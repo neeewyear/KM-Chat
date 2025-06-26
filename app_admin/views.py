@@ -33,6 +33,9 @@ import requests
 import os
 import json
 import time
+import zipfile
+from django.conf import settings
+from rest_framework import status
 
 
 # 返回验证码图片
@@ -1559,6 +1562,14 @@ def admin_center_menu(request):
             "href": reverse('doctemp_manage'),
         },
         {
+            "id": 5,
+            "title": _("Milvus知识库管理"),
+            "type": 1,
+            "icon": "layui-icon layui-icon-database",
+            "openType": "_iframe",  # 关键，防止侧边栏重复
+            "href": reverse('milvus_manage'),
+        },
+        {
             "id": "my_fodder",
             "title": _("素材管理"),
             "icon": "layui-icon layui-icon-upload-drag",
@@ -1685,3 +1696,392 @@ def admin_center_menu(request):
         # }
     ]
     return JsonResponse(menu_data,safe=False)
+
+# Milvus知识库管理
+@superuser_only
+@logger.catch()
+def admin_milvus(request):
+    """Milvus知识库管理页面"""
+    return render(request, 'app_admin/admin_milvus.html', locals())
+
+
+class AdminMilvusList(APIView):
+    """Milvus集合列表API"""
+    authentication_classes = [SessionAuthentication, AppMustAuth]
+    permission_classes = [SuperUserPermission]
+
+    def get(self, request):
+        """获取Milvus集合列表"""
+        try:
+            # 检查pymilvus是否可用
+            try:
+                from pymilvus import connections, utility
+                pymilvus_available = True
+            except ImportError:
+                return Response({
+                    'code': 1,
+                    'message': 'pymilvus未安装，请先安装: pip install pymilvus'
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+            # 获取Milvus配置
+            from django.conf import settings
+            host = getattr(settings, 'MILVUS_HOST', 'localhost')
+            port = getattr(settings, 'MILVUS_PORT', '19530')
+
+            # 连接Milvus
+            try:
+                connections.connect(
+                    alias="default",
+                    host=host,
+                    port=port
+                )
+                connected = True
+            except Exception as e:
+                return Response({
+                    'code': 1,
+                    'message': f'无法连接到Milvus服务器 {host}:{port}，错误: {str(e)}'
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+            # 获取所有集合
+            collections = []
+            try:
+                all_collections = utility.list_collections()
+                for collection_name in all_collections:
+                    try:
+                        from pymilvus import Collection
+                        collection = Collection(collection_name)
+                        
+                        # 获取集合信息
+                        schema = collection.schema
+                        description = schema.description or '无描述'
+                        
+                        # 获取集合统计信息
+                        try:
+                            collection.load()
+                            num_entities = collection.num_entities
+                            collection.release()
+                        except:
+                            num_entities = 0
+                        
+                        collections.append({
+                            'name': collection_name,
+                            'description': description,
+                            'num_entities': num_entities,
+                            'fields': [field.name for field in schema.fields],
+                            'status': 'active' if num_entities > 0 else 'empty'
+                        })
+                    except Exception as e:
+                        collections.append({
+                            'name': collection_name,
+                            'description': '获取信息失败',
+                            'num_entities': 0,
+                            'fields': [],
+                            'status': 'error',
+                            'error': str(e)
+                        })
+            except Exception as e:
+                return Response({
+                    'code': 1,
+                    'message': f'获取集合列表失败: {str(e)}'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            finally:
+                try:
+                    connections.disconnect("default")
+                except:
+                    pass
+
+            return Response({
+                'code': 0,
+                'data': collections,
+                'count': len(collections),
+                'milvus_info': {
+                    'host': host,
+                    'port': port,
+                    'connected': connected,
+                    'pymilvus_available': pymilvus_available
+                }
+            })
+
+        except Exception as e:
+            logger.error(f"获取Milvus集合列表失败: {e}")
+            return Response({
+                'code': 1,
+                'message': f'获取集合列表失败: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def post(self, request):
+        """创建新的Milvus集合"""
+        try:
+            collection_name = request.data.get('name', '').strip()
+            description = request.data.get('description', '').strip()
+            dimension = request.data.get('dimension', 1536)
+
+            if not collection_name:
+                return Response({
+                    'code': 1,
+                    'message': '集合名称不能为空'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # 检查pymilvus是否可用
+            try:
+                from pymilvus import connections, Collection, CollectionSchema, FieldSchema, DataType, utility
+                pymilvus_available = True
+            except ImportError:
+                return Response({
+                    'code': 1,
+                    'message': 'pymilvus未安装，请先安装: pip install pymilvus'
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+            # 获取Milvus配置
+            from django.conf import settings
+            host = getattr(settings, 'MILVUS_HOST', 'localhost')
+            port = getattr(settings, 'MILVUS_PORT', '19530')
+
+            # 连接Milvus
+            try:
+                connections.connect(
+                    alias="default",
+                    host=host,
+                    port=port
+                )
+            except Exception as e:
+                return Response({
+                    'code': 1,
+                    'message': f'无法连接到Milvus服务器 {host}:{port}，错误: {str(e)}'
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+            # 检查集合是否已存在
+            if utility.has_collection(collection_name):
+                return Response({
+                    'code': 1,
+                    'message': f'集合 {collection_name} 已存在'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # 创建集合
+            try:
+                # 定义字段
+                fields = [
+                    FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),
+                    FieldSchema(name="doc_id", dtype=DataType.INT64, description="文档ID"),
+                    FieldSchema(name="content_hash", dtype=DataType.VARCHAR, max_length=64, description="内容哈希"),
+                    FieldSchema(name="vector", dtype=DataType.FLOAT_VECTOR, dim=dimension, description="文档向量"),
+                ]
+
+                # 创建集合模式
+                schema = CollectionSchema(fields=fields, description=description)
+
+                # 创建集合
+                collection = Collection(name=collection_name, schema=schema)
+
+                # 创建索引
+                index_params = {
+                    "metric_type": "COSINE",
+                    "index_type": "IVF_FLAT",
+                    "params": {"nlist": 1024}
+                }
+                collection.create_index(field_name="vector", index_params=index_params)
+
+                return Response({
+                    'code': 0,
+                    'message': f'集合 {collection_name} 创建成功'
+                })
+
+            except Exception as e:
+                return Response({
+                    'code': 1,
+                    'message': f'创建集合失败: {str(e)}'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            finally:
+                try:
+                    connections.disconnect("default")
+                except:
+                    pass
+
+        except Exception as e:
+            logger.error(f"创建Milvus集合失败: {e}")
+            return Response({
+                'code': 1,
+                'message': f'创建集合失败: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def delete(self, request):
+        """删除Milvus集合"""
+        try:
+            collection_name = request.data.get('name', '').strip()
+
+            if not collection_name:
+                return Response({
+                    'code': 1,
+                    'message': '集合名称不能为空'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # 检查pymilvus是否可用
+            try:
+                from pymilvus import connections, utility
+                pymilvus_available = True
+            except ImportError:
+                return Response({
+                    'code': 1,
+                    'message': 'pymilvus未安装，请先安装: pip install pymilvus'
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+            # 获取Milvus配置
+            from django.conf import settings
+            host = getattr(settings, 'MILVUS_HOST', 'localhost')
+            port = getattr(settings, 'MILVUS_PORT', '19530')
+
+            # 连接Milvus
+            try:
+                connections.connect(
+                    alias="default",
+                    host=host,
+                    port=port
+                )
+            except Exception as e:
+                return Response({
+                    'code': 1,
+                    'message': f'无法连接到Milvus服务器 {host}:{port}，错误: {str(e)}'
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+            # 检查集合是否存在
+            if not utility.has_collection(collection_name):
+                return Response({
+                    'code': 1,
+                    'message': f'集合 {collection_name} 不存在'
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            # 删除集合
+            try:
+                utility.drop_collection(collection_name)
+                return Response({
+                    'code': 0,
+                    'message': f'集合 {collection_name} 删除成功'
+                })
+            except Exception as e:
+                return Response({
+                    'code': 1,
+                    'message': f'删除集合失败: {str(e)}'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            finally:
+                try:
+                    connections.disconnect("default")
+                except:
+                    pass
+
+        except Exception as e:
+            logger.error(f"删除Milvus集合失败: {e}")
+            return Response({
+                'code': 1,
+                'message': f'删除集合失败: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class AdminMilvusDetail(APIView):
+    """Milvus集合详情API"""
+    authentication_classes = [SessionAuthentication, AppMustAuth]
+    permission_classes = [SuperUserPermission]
+
+    def get(self, request, collection_name):
+        """获取集合详细信息"""
+        try:
+            # 检查pymilvus是否可用
+            try:
+                from pymilvus import connections, Collection, utility
+                pymilvus_available = True
+            except ImportError:
+                return Response({
+                    'code': 1,
+                    'message': 'pymilvus未安装，请先安装: pip install pymilvus'
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+            # 获取Milvus配置
+            from django.conf import settings
+            host = getattr(settings, 'MILVUS_HOST', 'localhost')
+            port = getattr(settings, 'MILVUS_PORT', '19530')
+
+            # 连接Milvus
+            try:
+                connections.connect(
+                    alias="default",
+                    host=host,
+                    port=port
+                )
+            except Exception as e:
+                return Response({
+                    'code': 1,
+                    'message': f'无法连接到Milvus服务器 {host}:{port}，错误: {str(e)}'
+                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+            # 检查集合是否存在
+            if not utility.has_collection(collection_name):
+                return Response({
+                    'code': 1,
+                    'message': f'集合 {collection_name} 不存在'
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            # 获取集合详细信息
+            try:
+                collection = Collection(collection_name)
+                schema = collection.schema
+                
+                # 获取集合统计信息
+                try:
+                    collection.load()
+                    num_entities = collection.num_entities
+                    
+                    # 获取索引信息
+                    index_info = collection.index().params
+                    
+                    collection.release()
+                except Exception as e:
+                    num_entities = 0
+                    index_info = {}
+                    logger.warning(f"获取集合 {collection_name} 统计信息失败: {e}")
+
+                # 获取字段信息
+                fields_info = []
+                for field in schema.fields:
+                    field_info = {
+                        'name': field.name,
+                        'dtype': str(field.dtype),
+                        'is_primary': field.is_primary,
+                        'auto_id': field.auto_id,
+                        'description': field.description or ''
+                    }
+                    if hasattr(field, 'max_length'):
+                        field_info['max_length'] = field.max_length
+                    if hasattr(field, 'dim'):
+                        field_info['dim'] = field.dim
+                    fields_info.append(field_info)
+
+                detail_info = {
+                    'name': collection_name,
+                    'description': schema.description or '无描述',
+                    'num_entities': num_entities,
+                    'fields': fields_info,
+                    'index_info': index_info,
+                    'created_time': getattr(schema, 'created_time', None)
+                }
+
+                return Response({
+                    'code': 0,
+                    'data': detail_info
+                })
+
+            except Exception as e:
+                return Response({
+                    'code': 1,
+                    'message': f'获取集合详情失败: {str(e)}'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            finally:
+                try:
+                    connections.disconnect("default")
+                except:
+                    pass
+
+        except Exception as e:
+            logger.error(f"获取Milvus集合详情失败: {e}")
+            return Response({
+                'code': 1,
+                'message': f'获取集合详情失败: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

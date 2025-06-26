@@ -1,0 +1,249 @@
+{% extends 'app_admin/admin_base.html' %}
+{% load static %}
+{% load i18n %}
+{% block title %}Milvus知识库管理{% endblock %}
+
+{% block content %}
+<div class="layui-card">
+    <div class="layui-card-header">
+        <h3>Milvus知识库管理</h3>
+        <button class="pear-btn pear-btn-primary" onclick="createCollection()">新建集合</button>
+    </div>
+    <div class="layui-card-body">
+        <table id="milvus-table" lay-filter="milvus-table"></table>
+    </div>
+</div>
+
+<!-- 表格工具栏 -->
+<script type="text/html" id="milvus-table-toolbar">
+    <button class="pear-btn pear-btn-md pear-btn-primary" lay-event="add">
+        <i class="layui-icon layui-icon-add-1"></i>
+        新建集合
+    </button>
+</script>
+
+<!-- 表格操作栏 -->
+<script type="text/html" id="milvus-table-bar">
+    <button class="pear-btn pear-btn-primary pear-btn-md" lay-event="detail">
+        <i class="layui-icon layui-icon-about"></i>
+        详情
+    </button>
+    <button class="pear-btn pear-btn-danger pear-btn-md" lay-event="delete">
+        <i class="layui-icon layui-icon-delete"></i>
+        删除
+    </button>
+</script>
+{% endblock %}
+
+{% block custom_script %}
+<script>
+    layui.use(['table', 'form', 'popup'], function() {
+        var table = layui.table;
+        var form = layui.form;
+        var popup = layui.popup;
+        var $ = layui.jquery;
+        
+        // 渲染表格
+        table.render({
+            elem: '#milvus-table',
+            url: "{% url 'api_milvus_collections' %}",
+            page: true,
+            cols: [[
+                {field: 'name', title: '集合名称', width: 200},
+                {field: 'description', title: '描述', width: 300},
+                {field: 'num_entities', title: '实体数量', width: 120, align: 'center'},
+                {field: 'status', title: '状态', width: 100, align: 'center', templet: function(d) {
+                    if (d.status === 'active') {
+                        return '<span class="layui-badge layui-bg-green">活跃</span>';
+                    } else if (d.status === 'empty') {
+                        return '<span class="layui-badge layui-bg-gray">空</span>';
+                    } else {
+                        return '<span class="layui-badge layui-bg-red">错误</span>';
+                    }
+                }},
+                {field: 'fields', title: '字段', width: 200, templet: function(d) { return d.fields.join(', '); }},
+                {title: '操作', width: 200, align: 'center', toolbar: '#milvus-table-bar'}
+            ]],
+            skin: 'line',
+            toolbar: '#milvus-table-toolbar',
+            defaultToolbar: [{
+                layEvent: 'refresh',
+                icon: 'layui-icon-refresh',
+            }, 'filter', 'print', 'exports']
+        });
+        
+        // 表格工具栏事件
+        table.on('toolbar(milvus-table)', function(obj) {
+            if (obj.event === 'refresh') {
+                table.reload('milvus-table');
+            } else if (obj.event === 'add') {
+                createCollection();
+            }
+        });
+        
+        // 表格行工具事件
+        table.on('tool(milvus-table)', function(obj) {
+            if (obj.event === 'detail') {
+                showCollectionDetail(obj.data.name);
+            } else if (obj.event === 'delete') {
+                deleteCollection(obj.data.name);
+            }
+        });
+        
+        // 显示集合详情
+        function showCollectionDetail(collectionName) {
+            $.get("{% url 'api_milvus_collections' %}" + collectionName + "/", function(res) {
+                if (res.code === 0) {
+                    var data = res.data;
+                    var detailHtml = `
+                        <div class="layui-form">
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">集合名称:</label>
+                                <div class="layui-input-block">
+                                    <input type="text" value="${data.name}" readonly class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">描述:</label>
+                                <div class="layui-input-block">
+                                    <textarea readonly class="layui-textarea">${data.description}</textarea>
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">实体数量:</label>
+                                <div class="layui-input-block">
+                                    <input type="text" value="${data.num_entities}" readonly class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">字段信息:</label>
+                                <div class="layui-input-block">
+                                    <table class="layui-table">
+                                        <thead>
+                                            <tr>
+                                                <th>字段名</th>
+                                                <th>类型</th>
+                                                <th>主键</th>
+                                                <th>描述</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${data.fields.map(field => `
+                                                <tr>
+                                                    <td>${field.name}</td>
+                                                    <td>${field.dtype}</td>
+                                                    <td>${field.is_primary ? '是' : '否'}</td>
+                                                    <td>${field.description}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    popup.open({
+                        type: 1,
+                        title: '集合详情',
+                        area: ['800px', '600px'],
+                        content: detailHtml
+                    });
+                } else {
+                    popup.failure(res.message);
+                }
+            });
+        }
+        
+        // 删除集合
+        function deleteCollection(collectionName) {
+            popup.confirm('确定要删除集合 ' + collectionName + ' 吗？', function(index) {
+                $.ajax({
+                    url: "{% url 'api_milvus_collections' %}",
+                    type: 'DELETE',
+                    data: JSON.stringify({name: collectionName}),
+                    contentType: 'application/json',
+                    headers: {"X-CSRFToken": '{{ csrf_token }}'},
+                    success: function(res) {
+                        if (res.code === 0) {
+                            popup.success(res.message);
+                            table.reload('milvus-table');
+                        } else {
+                            popup.failure(res.message);
+                        }
+                    },
+                    error: function() {
+                        popup.failure('删除失败');
+                    }
+                });
+                layer.close(index);
+            });
+        }
+        
+        // 创建集合
+        window.createCollection = function() {
+            popup.open({
+                type: 1,
+                title: '创建新集合',
+                area: ['500px', '400px'],
+                content: `
+                    <form class="layui-form" style="padding: 20px;">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">集合名称</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="name" placeholder="请输入集合名称" class="layui-input" required>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">描述</label>
+                            <div class="layui-input-block">
+                                <textarea name="description" placeholder="请输入集合描述" class="layui-textarea"></textarea>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">向量维度</label>
+                            <div class="layui-input-block">
+                                <input type="number" name="dimension" value="1536" class="layui-input" required>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div class="layui-input-block">
+                                <button class="pear-btn pear-btn-primary" lay-submit lay-filter="create-collection">
+                                    <i class="layui-icon layui-icon-ok"></i>
+                                    创建
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                `,
+                success: function() {
+                    form.render();
+                }
+            });
+        };
+        
+        // 监听创建集合表单提交
+        form.on('submit(create-collection)', function(data) {
+            $.ajax({
+                url: "{% url 'api_milvus_collections' %}",
+                type: 'POST',
+                data: JSON.stringify(data.field),
+                contentType: 'application/json',
+                headers: {"X-CSRFToken": '{{ csrf_token }}'},
+                success: function(res) {
+                    if (res.code === 0) {
+                        popup.success(res.message);
+                        layer.closeAll();
+                        table.reload('milvus-table');
+                    } else {
+                        popup.failure(res.message);
+                    }
+                },
+                error: function() {
+                    popup.failure('创建失败');
+                }
+            });
+            return false;
+        });
+    });
+</script>
+{% endblock %} 

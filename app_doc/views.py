@@ -9,7 +9,7 @@ from django.views.decorators.http import require_http_methods,require_GET,requir
 from django.core.paginator import Paginator,PageNotAnInteger,EmptyPage,InvalidPage # 后端分页
 from django.core.exceptions import PermissionDenied,ObjectDoesNotExist
 from django.core.serializers import serialize
-from app_doc.models import Project,Doc,DocTemp
+from app_doc.models import Project,Doc,DocTemp,ProjectCollaborator,Tag,Image,Attachment,DocTag
 from django.contrib.auth.models import User
 from rest_framework.views import APIView # 视图
 from rest_framework.response import Response # 响应
@@ -3070,7 +3070,7 @@ def download_doc_md(request,doc_id):
         return render(request,'404.html')
 
     response = HttpResponse(content_type='text/plain')
-    response['Content-Disposition'] = 'attachment; filename={}.md'.format(doc.name)
+    response['Content-Disposition'] = 'attachment; filename={}.md'.format(doc.name)
     response.write(doc.pre_content)
 
     return response
