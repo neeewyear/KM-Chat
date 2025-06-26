@@ -35,6 +35,7 @@ class RequiredLoginMiddleware():
             r'/api/upload_img/(.*)$',  # token api 上传图片
             r'/api/upload_img_url/(.*)$',  # token api 上传URL图片
             r'/api/check_token/(.*)$',  # token api 验证
+            r'/api/import_local_doc/(.*)$',  # token api 导入本地文档
         )
         self.exceptions = tuple(re.compile(url) for url in compile_tuple)
 

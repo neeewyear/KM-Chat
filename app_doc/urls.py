@@ -27,6 +27,7 @@ urlpatterns = [
     path('manage_pro_doc_sort/<int:pro_id>/',views.manage_project_doc_sort,name='manage_pro_doc_sort'), # 文集排序
     path('api/my_colla_list/', views.MyCollaList.as_view(), name="my_colla_list"),  # 我的协作文集列表
     path('api/import_local_doc/', views_import.ImportLocalDoc.as_view(), name="import_local_doc_api"),  # 导入本地文档API
+    path('import/multiple_formats/',views_import.import_multiple_formats,name="import_multiple_formats"), # 导入多种文件格式API
     #################文档相关
     path('project-<int:pro_id>/doc-<int:doc_id>/', views.doc, name='doc'),  # 文档浏览页
     path('doc/<int:doc_id>/', views.doc_id, name="doc_id"),  # 文档浏览页(通过文档ID)

@@ -79,7 +79,7 @@
                 <div>
                     <button style="width: 100%;min-height: 113px;border-style:dashed;border-color: #999;cursor: pointer;" type="button" id="import-local-doc">
                         <i class="layui-icon layui-icon-addition" style="font-size: 40px;color:#999"></i><br>
-                        点击上传本地文档，支持.md、.docx、.txt格式文件
+                        点击上传本地文档，支持.md、.txt、.docx、.pdf、.xlsx、.xls、.ppt、.pptx等格式文件
                     </button>
                 </div>
             </div>
@@ -120,7 +120,7 @@
         field:"local_doc",
         multiple:true,
         accept:'file',
-        exts:'md|txt|docx',
+        exts:'md|txt|docx|pdf|xlsx|xls|ppt|pptx|doc',
         before: function(obj){ //obj参数包含的信息，跟 choose回调完全一致，可参见上文。
             this.data = form.val("project-settings");
             layer.load(); //上传loading

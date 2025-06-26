@@ -20,6 +20,8 @@ import time
 import re
 import yaml
 import sys
+import tempfile
+import json
 
 
 # 导入Zip文集
@@ -275,6 +277,152 @@ class ImportDocxDoc():
         except:
             os.remove(self.docx_file_path)
             return {'status':False,'data':_('读取异常')}
+
+
+# 使用MinerU导入多种文件格式
+class ImportMinerUDoc():
+    def __init__(self, file_path, editor_mode, create_user):
+        self.file_path = file_path  # 文件绝对路径
+        self.create_user = create_user
+        self.editor_mode = int(editor_mode)
+        self.supported_extensions = {
+            '.pdf': 'PDF文档',
+            '.xlsx': 'Excel表格',
+            '.xls': 'Excel表格',
+            '.ppt': 'PowerPoint演示文稿',
+            '.pptx': 'PowerPoint演示文稿',
+            '.md': 'Markdown文档',
+            '.txt': '文本文件',
+            '.doc': 'Word文档',
+            '.docx': 'Word文档'
+        }
+
+    def get_file_extension(self):
+        """获取文件扩展名"""
+        return os.path.splitext(self.file_path)[1].lower()
+
+    def is_supported_file(self):
+        """检查文件是否支持"""
+        return self.get_file_extension() in self.supported_extensions
+
+    def process_with_mineru(self):
+        """使用MinerU处理文件"""
+        try:
+            # 创建临时输出目录
+            with tempfile.TemporaryDirectory() as temp_output_dir:
+                # 导入MinerU
+                from mineru import MinerU
+                
+                # 初始化MinerU，关闭OCR处理
+                mineru = MinerU(
+                    enable_ocr=False,  # 关闭OCR处理
+                    enable_formula=True,  # 启用公式解析
+                    enable_table=True,  # 启用表格解析
+                )
+                
+                # 处理文件
+                result = mineru.process(
+                    input_path=self.file_path,
+                    output_path=temp_output_dir,
+                    method='auto'  # 自动选择处理方法
+                )
+                
+                # 读取生成的Markdown文件
+                markdown_file = os.path.join(temp_output_dir, 'output.md')
+                if os.path.exists(markdown_file):
+                    with open(markdown_file, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                    return {'status': True, 'data': content}
+                else:
+                    # 如果没有生成Markdown文件，尝试读取JSON文件
+                    json_file = os.path.join(temp_output_dir, 'output.json')
+                    if os.path.exists(json_file):
+                        with open(json_file, 'r', encoding='utf-8') as f:
+                            json_data = json.load(f)
+                        # 从JSON中提取文本内容
+                        content = self.extract_text_from_json(json_data)
+                        return {'status': True, 'data': content}
+                    else:
+                        return {'status': False, 'data': _('MinerU处理失败，未生成输出文件')}
+                        
+        except ImportError:
+            return {'status': False, 'data': _('MinerU未安装，请先安装MinerU: pip install mineru')}
+        except Exception as e:
+            logger.exception(f"MinerU处理文件异常: {str(e)}")
+            return {'status': False, 'data': _('MinerU处理文件异常: {}').format(str(e))}
+
+    def extract_text_from_json(self, json_data):
+        """从MinerU的JSON输出中提取文本内容"""
+        try:
+            content = ""
+            if isinstance(json_data, dict):
+                # 提取页面内容
+                pages = json_data.get('pages', [])
+                for page in pages:
+                    # 提取文本块
+                    text_blocks = page.get('text_blocks', [])
+                    for block in text_blocks:
+                        text = block.get('text', '')
+                        if text:
+                            content += text + '\n\n'
+                    
+                    # 提取表格
+                    tables = page.get('tables', [])
+                    for table in tables:
+                        table_md = self.convert_table_to_markdown(table)
+                        content += table_md + '\n\n'
+            return content
+        except Exception as e:
+            logger.exception(f"提取JSON内容异常: {str(e)}")
+            return str(json_data)
+
+    def convert_table_to_markdown(self, table):
+        """将表格转换为Markdown格式"""
+        try:
+            rows = table.get('rows', [])
+            if not rows:
+                return ""
+            
+            markdown_table = ""
+            for i, row in enumerate(rows):
+                cells = row.get('cells', [])
+                if cells:
+                    # 添加分隔符行
+                    if i == 1:
+                        separator = "|" + "|".join(["---"] * len(cells)) + "|\n"
+                        markdown_table += separator
+                    
+                    # 添加数据行
+                    row_content = "|" + "|".join([str(cell.get('text', '')) for cell in cells]) + "|\n"
+                    markdown_table += row_content
+            
+            return markdown_table
+        except Exception as e:
+            logger.exception(f"转换表格异常: {str(e)}")
+            return ""
+
+    def run(self):
+        """运行文件处理"""
+        try:
+            if not self.is_supported_file():
+                return {'status': False, 'data': _('不支持的文件格式')}
+            
+            # 使用MinerU处理文件
+            result = self.process_with_mineru()
+            
+            # 清理临时文件
+            if os.path.exists(self.file_path):
+                os.remove(self.file_path)
+            
+            return result
+            
+        except Exception as e:
+            logger.exception(f"ImportMinerUDoc处理异常: {str(e)}")
+            # 清理临时文件
+            if os.path.exists(self.file_path):
+                os.remove(self.file_path)
+            return {'status': False, 'data': _('处理异常: {}').format(str(e))}
+
 
 if __name__ == '__main__':
     imp = ImportZipProject()

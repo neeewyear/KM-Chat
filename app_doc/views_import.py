@@ -13,7 +13,7 @@ from django.views.decorators.http import require_http_methods,require_GET,requir
 from django.views.decorators.csrf import csrf_exempt
 from django.core.paginator import Paginator,PageNotAnInteger,EmptyPage,InvalidPage # 后端分页
 from django.core.exceptions import PermissionDenied,ObjectDoesNotExist
-from app_doc.models import Project,Doc,DocTemp
+from app_doc.models import Project,Doc,DocTemp,ProjectCollaborator
 from django.contrib.auth.models import User
 from django.db.models import Q
 from django.db import transaction
@@ -22,7 +22,7 @@ from rest_framework.views import APIView # 视图
 from rest_framework.response import Response # 响应
 from rest_framework.pagination import PageNumberPagination # 分页
 from rest_framework.authentication import SessionAuthentication # 认证
-from rest_framework.permissions import IsAdminUser # 权限
+from rest_framework.permissions import IsAdminUser,IsAuthenticated # 权限
 from loguru import logger
 from app_doc.report_utils import *
 from app_admin.decorators import check_headers,allow_report_file
@@ -152,7 +152,8 @@ def import_local_doc_to_project(request):
 
 # 导入文档到文集API
 class ImportLocalDoc(APIView):
-    authentication_classes = [SessionAuthentication, AppMustAuth]
+    authentication_classes = [SessionAuthentication]
+    permission_classes = [IsAuthenticated]
 
     # 上传文件
     def post(self,request):
@@ -168,52 +169,123 @@ class ImportLocalDoc(APIView):
                 'data':'必须选择文集'
             }
             return Response(resp)
+        
+        # 验证用户是否有文集权限
+        try:
+            project_obj = Project.objects.get(id=project)
+            # 检查用户是否为文集创建者
+            if project_obj.create_user != request.user:
+                # 检查用户是否为文集协作者
+                colla_project = ProjectCollaborator.objects.filter(project=project, user=request.user)
+                if not colla_project.exists():
+                    resp = {
+                        'code':2,
+                        'data':'无权操作此文集'
+                    }
+                    return Response(resp)
+        except ObjectDoesNotExist:
+            resp = {
+                'code':5,
+                'data':'文集不存在'
+            }
+            return Response(resp)
+        
         if file is None:
             resp = {
                 'code':5,
                 'data':'文件未选择'
             }
+            return Response(resp)
+        
         file_name = file.name
-        # Markdown 文件和 TXT 文件
-        if file_name.endswith('.md') or file_name.endswith(".txt"):
-            doc_content = file.read().decode('utf-8')
-            if editor_mode == 3:
-                doc_content_html = markdown.markdown(text=doc_content)
-            else:
-                doc_content_html = None
-            doc = Doc.objects.create(
-                name = html_filter('.'.join(file_name.split('.')[:-1])),
-                pre_content = doc_content,
-                content = doc_content_html,
-                top_doc = project,
-                editor_mode = 1 if editor_mode == 0 else editor_mode,
-                create_user = request.user,
-                status = 0
-            )
-            doc.save()
+        file_extension = os.path.splitext(file_name)[1].lower()
+        
+        # 支持的文件格式
+        supported_extensions = {
+            '.md': 'Markdown文档',
+            '.txt': '文本文件',
+            '.docx': 'Word文档',
+            '.pdf': 'PDF文档',
+            '.xlsx': 'Excel表格',
+            '.xls': 'Excel表格',
+            '.ppt': 'PowerPoint演示文稿',
+            '.pptx': 'PowerPoint演示文稿',
+            '.doc': 'Word文档'
+        }
+        
+        # 检查文件格式是否支持
+        if file_extension not in supported_extensions:
             resp = {
-                'code':0,
-                'data':{
-                    'doc_id':doc.id,
-                    'doc_name':doc.name
-                }
+                'code':5,
+                'data':f'不支持的文件格式: {file_extension}。支持格式: {", ".join(supported_extensions.keys())}'
             }
-        # Word 文件
-        elif file_name.endswith('.docx'):
-            if os.path.exists(os.path.join(settings.MEDIA_ROOT, 'import_temp')) is False:
-                os.mkdir(os.path.join(settings.MEDIA_ROOT, 'import_temp'))
+            return Response(resp)
+        
+        # 创建临时目录
+        if os.path.exists(os.path.join(settings.MEDIA_ROOT, 'import_temp')) is False:
+            os.mkdir(os.path.join(settings.MEDIA_ROOT, 'import_temp'))
 
-            temp_file_name = str(time.time()) + '.docx'
-            temp_file_path = os.path.join(settings.MEDIA_ROOT, 'import_temp/' + temp_file_name)
-            with open(temp_file_path, 'wb+') as docx_file:
-                for chunk in file:
-                    docx_file.write(chunk)
-            if os.path.exists(temp_file_path):
+        temp_file_name = str(time.time()) + file_extension
+        temp_file_path = os.path.join(settings.MEDIA_ROOT, 'import_temp/' + temp_file_name)
+        
+        # 保存上传的文件
+        with open(temp_file_path, 'wb+') as temp_file:
+            for chunk in file:
+                temp_file.write(chunk)
+        
+        if not os.path.exists(temp_file_path):
+            resp = {
+                'code':4,
+                'data': f'{file_name}上传失败'
+            }
+            return Response(resp)
+        
+        # 根据文件格式选择处理方法
+        if file_extension in ['.md', '.txt']:
+            # Markdown 文件和 TXT 文件 - 直接读取
+            try:
+                with open(temp_file_path, 'r', encoding='utf-8') as f:
+                    doc_content = f.read()
+                os.remove(temp_file_path)
+                
+                if editor_mode == 3:
+                    doc_content_html = markdown.markdown(text=doc_content)
+                else:
+                    doc_content_html = None
+                    
+                doc = Doc.objects.create(
+                    name = html_filter('.'.join(file_name.split('.')[:-1])),
+                    pre_content = doc_content,
+                    content = doc_content_html,
+                    top_doc = project,
+                    editor_mode = 1 if editor_mode == 0 else editor_mode,
+                    create_user = request.user,
+                    status = 0
+                )
+                doc.save()
+                resp = {
+                    'code':0,
+                    'data':{
+                        'doc_id':doc.id,
+                        'doc_name':doc.name
+                    }
+                }
+            except Exception as e:
+                os.remove(temp_file_path)
+                resp = {
+                    'code':4,
+                    'data': f'{file_name}读取失败: {str(e)}'
+                }
+                
+        elif file_extension == '.docx':
+            # Word 文件 - 使用现有的ImportDocxDoc
+            try:
                 docx_file_content = ImportDocxDoc(
                     docx_file_path=temp_file_path,
                     editor_mode=editor_mode,
                     create_user=request.user
                 ).run()
+                
                 if docx_file_content['status']:
                     doc = Doc.objects.create(
                         name=html_filter(file_name[:-5]),
@@ -235,18 +307,54 @@ class ImportLocalDoc(APIView):
                 else:
                     resp = {
                         'code':4,
-                        'data': '{}读取失败'.format(file_name)
+                        'data': f'{file_name}读取失败: {docx_file_content["data"]}'
                     }
-            else:
+            except Exception as e:
                 resp = {
-                    'code': 4,
-                    'data': '{}上传失败'.format(file_name)
+                    'code':4,
+                    'data': f'{file_name}处理失败: {str(e)}'
                 }
+                
         else:
-            resp = {
-                'code':5,
-                'data':'文件格式不支持'
-            }
+            # 其他格式文件 - 使用MinerU处理
+            try:
+                from app_doc.import_utils import ImportMinerUDoc
+                
+                mineru_result = ImportMinerUDoc(
+                    file_path=temp_file_path,
+                    editor_mode=editor_mode,
+                    create_user=request.user
+                ).run()
+                
+                if mineru_result['status']:
+                    doc = Doc.objects.create(
+                        name=html_filter('.'.join(file_name.split('.')[:-1])),
+                        pre_content=mineru_result['data'],
+                        content=mineru_result['data'] if editor_mode == 3 else None,
+                        top_doc=project,
+                        editor_mode=1 if editor_mode == 0 else editor_mode,
+                        create_user=request.user,
+                        status=0
+                    )
+                    doc.save()
+                    resp = {
+                        'code': 0,
+                        'data': {
+                            'doc_id': doc.id,
+                            'doc_name': doc.name
+                        }
+                    }
+                else:
+                    resp = {
+                        'code':4,
+                        'data': f'{file_name}处理失败: {mineru_result["data"]}'
+                    }
+            except Exception as e:
+                resp = {
+                    'code':4,
+                    'data': f'{file_name}处理失败: {str(e)}'
+                }
+        
         return Response(resp)
 
     # 发布文档
@@ -362,6 +470,110 @@ def import_doc_docx(request):
                     return JsonResponse({'status': False, 'data': _('上传失败')})
             else:
                 return JsonResponse({'status': False, 'data': _('仅支持.docx格式')})
+        else:
+            return JsonResponse({'status': False, 'data': _('无有效文件')})
+    else:
+        return JsonResponse({'status': False, 'data': _('参数错误')})
+
+# 导入多种文件格式API
+@login_required()
+@csrf_exempt
+@require_POST
+def import_multiple_formats(request):
+    """导入多种文件格式的API"""
+    file_type = request.POST.get('type', None)
+    editor_mode = request.POST.get('editor_mode', 1)
+    
+    if file_type == 'multiple':
+        import_file = request.FILES.get('import_file', None)
+        if import_file:
+            file_name = import_file.name
+            file_extension = os.path.splitext(file_name)[1].lower()
+            
+            # 支持的文件格式
+            supported_extensions = {
+                '.md': 'Markdown文档',
+                '.txt': '文本文件',
+                '.docx': 'Word文档',
+                '.pdf': 'PDF文档',
+                '.xlsx': 'Excel表格',
+                '.xls': 'Excel表格',
+                '.ppt': 'PowerPoint演示文稿',
+                '.pptx': 'PowerPoint演示文稿',
+                '.doc': 'Word文档'
+            }
+            
+            # 检查文件格式是否支持
+            if file_extension not in supported_extensions:
+                return JsonResponse({'status': False, 'data': f'不支持的文件格式: {file_extension}'})
+            
+            # 限制文件大小在50mb以内
+            if import_file.size > 52428800:
+                return JsonResponse({'status': False, 'data': _('文件大小超出限制')})
+            
+            # 创建临时目录
+            if os.path.exists(os.path.join(settings.MEDIA_ROOT, 'import_temp')) is False:
+                os.mkdir(os.path.join(settings.MEDIA_ROOT, 'import_temp'))
+
+            temp_file_name = str(time.time()) + file_extension
+            temp_file_path = os.path.join(settings.MEDIA_ROOT, 'import_temp/' + temp_file_name)
+            
+            # 保存上传的文件
+            with open(temp_file_path, 'wb+') as temp_file:
+                for chunk in import_file:
+                    temp_file.write(chunk)
+            
+            if not os.path.exists(temp_file_path):
+                return JsonResponse({'status': False, 'data': f'{file_name}上传失败'})
+            
+            try:
+                # 根据文件格式选择处理方法
+                if file_extension in ['.md', '.txt']:
+                    # Markdown 文件和 TXT 文件 - 直接读取
+                    with open(temp_file_path, 'r', encoding='utf-8') as f:
+                        doc_content = f.read()
+                    os.remove(temp_file_path)
+                    
+                    if int(editor_mode) == 3:
+                        doc_content_html = markdown.markdown(text=doc_content)
+                    else:
+                        doc_content_html = None
+                        
+                    return JsonResponse({'status': True, 'data': doc_content})
+                    
+                elif file_extension == '.docx':
+                    # Word 文件 - 使用现有的ImportDocxDoc
+                    docx_file_content = ImportDocxDoc(
+                        docx_file_path=temp_file_path,
+                        editor_mode=editor_mode,
+                        create_user=request.user
+                    ).run()
+                    
+                    if docx_file_content['status']:
+                        return JsonResponse({'status': True, 'data': docx_file_content['data']})
+                    else:
+                        return JsonResponse({'status': False, 'data': f'{file_name}读取失败: {docx_file_content["data"]}'})
+                        
+                else:
+                    # 其他格式文件 - 使用MinerU处理
+                    from app_doc.import_utils import ImportMinerUDoc
+                    
+                    mineru_result = ImportMinerUDoc(
+                        file_path=temp_file_path,
+                        editor_mode=editor_mode,
+                        create_user=request.user
+                    ).run()
+                    
+                    if mineru_result['status']:
+                        return JsonResponse({'status': True, 'data': mineru_result['data']})
+                    else:
+                        return JsonResponse({'status': False, 'data': f'{file_name}处理失败: {mineru_result["data"]}'})
+                        
+            except Exception as e:
+                # 清理临时文件
+                if os.path.exists(temp_file_path):
+                    os.remove(temp_file_path)
+                return JsonResponse({'status': False, 'data': f'{file_name}处理失败: {str(e)}'})
         else:
             return JsonResponse({'status': False, 'data': _('无有效文件')})
     else:
